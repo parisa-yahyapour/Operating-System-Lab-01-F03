@@ -291,6 +291,7 @@ void consoleintr(int (*getc)(void))
         {
           input.w = input.e;
           wakeup(&input.r);
+          back_step=0;//every time we go to next line every thing restart
         }
       }
       break;
