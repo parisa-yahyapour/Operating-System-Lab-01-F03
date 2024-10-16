@@ -202,45 +202,82 @@ struct
 
 #define C(x) ((x) - '@') // Control-x
 
-
 static void activate_back_arrow()
 {
   int cursor_position;
-  outb(CRTPORT,14);
-  cursor_position=inb(CRTPORT+1)<<8;
-  outb(CRTPORT,15);
-  cursor_position |=inb(CRTPORT+1);
-  //check to make sure we dont go further than the input string so we shouldnt go left
-  if (crt[cursor_position-2]!= (('$'& 0xff )| 0x0700))
+  outb(CRTPORT, 14);
+  cursor_position = inb(CRTPORT + 1) << 8;
+  outb(CRTPORT, 15);
+  cursor_position |= inb(CRTPORT + 1);
+  // check to make sure we dont go further than the input string so we shouldnt go left
+  if (crt[cursor_position - 2] != (('$' & 0xff) | 0x0700))
   {
     cursor_position--;
   }
-  outb(CRTPORT,14);
-  outb(CRTPORT+1,cursor_position>>8);
-  outb(CRTPORT,15);
-  outb(CRTPORT+1,cursor_position);
-  back_step++;//remember how much we move
+  outb(CRTPORT, 14);
+  outb(CRTPORT + 1, cursor_position >> 8);
+  outb(CRTPORT, 15);
+  outb(CRTPORT + 1, cursor_position);
+  back_step++; // remember how much we move
 }
 
 static void activate_forward_arrow()
 {
   int cursor_position;
-  outb(CRTPORT,14);
-  cursor_position=inb(CRTPORT+1)<<8;
-  outb(CRTPORT,15);
-  cursor_position |=inb(CRTPORT+1);
-  //if we dont have any input string we shouldnt be able to go right
-  if (crt[cursor_position+2]!= (('$'& 0xff )| 0x0700))
+  outb(CRTPORT, 14);
+  cursor_position = inb(CRTPORT + 1) << 8;
+  outb(CRTPORT, 15);
+  cursor_position |= inb(CRTPORT + 1);
+  // if we dont have any input string we shouldnt be able to go right
+  if (crt[cursor_position + 2] != (('$' & 0xff) | 0x0700))
   {
     cursor_position++;
   }
-  outb(CRTPORT,14);
-  outb(CRTPORT+1,cursor_position>>8);
-  outb(CRTPORT,15);
-  outb(CRTPORT+1,cursor_position);
-  back_step--;//remember how much we go right
+  outb(CRTPORT, 14);
+  outb(CRTPORT + 1, cursor_position >> 8);
+  outb(CRTPORT, 15);
+  outb(CRTPORT + 1, cursor_position);
+  back_step--; // remember how much we go right
 }
 
+char history[11][128];
+int num_command = 0;
+int index = 0;
+void print_t()
+{
+  for (int i = num_command - 2; i >= 0; i--)
+  {
+    cprintf(history[i]);
+    consputc('\n');
+  }
+}
+
+int compare_string(char *str1, char *str2)
+{
+  if (strlen(str1) != strlen(str2))
+  {
+    return 1;
+  }
+
+  for (int i = 0; i < strlen(str1); i++)
+  {
+    if (str1[i] != str2[i])
+    {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+void shift_array()
+{
+  for (int i = 1; i < 11; i++)
+  {
+    memset(history[i - 1], '\0', 128);
+    safestrcpy(history[i - 1], history[i], 128);
+  }
+  memset(history[10], '\0', 128);
+}
 
 void consoleintr(int (*getc)(void))
 {
@@ -284,14 +321,39 @@ void consoleintr(int (*getc)(void))
     default:
       if (c != 0 && input.e - input.r < INPUT_BUF)
       {
+        if (num_command == 11)
+        {
+          shift_array();
+          num_command--;
+        }
+        if (c != '\n' && c != '\r')
+        {
+          history[num_command][index++] = c;
+        }
         c = (c == '\r') ? '\n' : c;
         input.buf[input.e++ % INPUT_BUF] = c;
         consputc(c);
         if (c == '\n' || c == C('D') || input.e == input.r + INPUT_BUF)
         {
+          if (num_command != 11)
+          {
+            num_command++;
+          }
+          index = 0;
+          if (compare_string(history[num_command - 1], "history") == 0)
+          {
+            release(&cons.lock);
+            print_t();
+            acquire(&cons.lock);
+            input.e = input.r;
+            if (input.e - input.r < INPUT_BUF)
+            {
+              input.buf[input.e++ % INPUT_BUF] = '\n';
+            }
+          }
           input.w = input.e;
           wakeup(&input.r);
-          back_step=0;//every time we go to next line every thing restart
+          back_step = 0; // every time we go to next line every thing restart
         }
       }
       break;
