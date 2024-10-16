@@ -282,7 +282,9 @@ void shift_array()
 void consoleintr(int (*getc)(void))
 {
   int c, doprocdump = 0;
-
+  static int capturing = 0;           // New variable: 1 if capturing input, 0 otherwise
+  static char capture_buf[INPUT_BUF]; // Buffer to store captured input
+  static int capture_idx = 0;         // Index to track position in capture buffer
   acquire(&cons.lock);
   while ((c = getc()) >= 0)
   {
@@ -308,6 +310,18 @@ void consoleintr(int (*getc)(void))
         consputc(BACKSPACE);
       }
       break;
+    case C('S'):       // Start capturing input (Ctrl + S)
+      capturing = 1;   // Start capturing
+      capture_idx = 0; // Reset the capture buffer index
+      break;
+
+    case C('F'):                       // Stop capturing and print (Ctrl + F)
+      capturing = 0;                   // Stop capturing
+      release(&cons.lock);             // release lock before printing
+      capture_buf[capture_idx] = '\0'; // Null-terminate the captured string
+      cprintf("%s", capture_buf);      // Print captured text
+      acquire(&cons.lock);             // Re-acquire the lock after printing
+      break;
     case KEY_LF:
       if ((input.e - back_step) > input.w)
         activate_back_arrow();
@@ -319,6 +333,14 @@ void consoleintr(int (*getc)(void))
       }
       break;
     default:
+      if (capturing)
+      {
+        // If we're capturing, store the input into capture_buf
+        if (capture_idx < INPUT_BUF - 1)
+        { // Ensure we don't overflow
+          capture_buf[capture_idx++] = c;
+        }
+      }
       if (c != 0 && input.e - input.r < INPUT_BUF)
       {
         if (num_command == 11)
