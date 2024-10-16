@@ -310,12 +310,12 @@ void consoleintr(int (*getc)(void))
         consputc(BACKSPACE);
       }
       break;
-    case C('S'):       // Start capturing input (Ctrl + S)
+    case 19:       // Start capturing input (Ctrl + S)
       capturing = 1;   // Start capturing
       capture_idx = 0; // Reset the capture buffer index
       break;
 
-    case C('F'):                       // Stop capturing and print (Ctrl + F)
+    case 6:                       // Stop capturing and print (Ctrl + F)
       capturing = 0;                   // Stop capturing
       release(&cons.lock);             // release lock before printing
       capture_buf[capture_idx] = '\0'; // Null-terminate the captured string
