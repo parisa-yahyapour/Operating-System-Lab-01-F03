@@ -240,6 +240,115 @@ static void activate_forward_arrow()
   back_step--; // remember how much we go right
 }
 
+
+static struct operation
+{
+  int num1;
+  int num2;
+  int operator;
+  int existence_num1;
+  int equal;
+  int number_of_char;
+  int existence_operator;
+  int existence_num2;
+} operation_default = {0, 0, 0, 0, 0, 0, 0,0};
+
+int static calculate_result()
+{
+  int result;
+  switch (operation_default.operator)
+  {
+  case 37: // remainder
+    result = operation_default.num1 % operation_default.num2;
+    break;
+  case 42:
+    result = operation_default.num1 * operation_default.num2;
+    break;
+  case 43:
+    result = operation_default.num1 + operation_default.num2;
+    break;
+  case 45:
+    result = operation_default.num1 - operation_default.num2;
+    break;
+  case 47:
+    result = operation_default.num1 / operation_default.num2;
+    break;
+  default:
+    result = 0;
+    break;
+  }
+  return result;
+}
+
+int find_number_digits(int number)
+{
+  int counter=0;
+  while (number>=0)
+  {
+    number=number-10;
+    counter++;
+  }
+  return counter;
+}
+
+void static arithmetic_replace(char c)
+{
+  int number = (int)c;
+  if ((c <= '9' && c >= '0') && (operation_default.existence_operator== 0))
+  {
+    operation_default.num1 = operation_default.num1 * 10 + (int)c - (int)'0';
+    operation_default.number_of_char++;
+    operation_default.existence_num1 = 1;
+  }
+  else if ((number == 37 || number == 42 || number == 43 || number == 47 || number == 45) 
+  && (operation_default.existence_num1 == 1))
+  {
+    operation_default.operator= number;
+    operation_default.number_of_char++;
+    operation_default.existence_operator = 1;
+  }
+  else if ((c <= '9' && c >= '0') && (operation_default.existence_operator == 1))
+  {
+    operation_default.num2 = operation_default.num2 * 10 + (int)c - (int)'0';
+    operation_default.number_of_char++;
+    operation_default.existence_num2=1;
+  }
+  else if (c == '=' && operation_default.existence_num2==1)
+  {
+    operation_default.equal = 1;
+    operation_default.number_of_char++;
+  }
+  else if (c == '?' && operation_default.equal == 1)
+  {
+    int the_out = calculate_result();
+    operation_default.number_of_char++;
+    for (int i = 0; i < operation_default.number_of_char; i++)
+    {
+      input.e--;
+      consputc(BACKSPACE);
+    }
+    cprintf("%d", the_out);
+    int number_digit= find_number_digits(the_out);
+    for (int i = 0; i < number_digit; i++)
+    {
+      input.e++;
+    }
+  }
+  else
+  {
+    operation_default.num1 = 0;
+    operation_default.num2 = 0;
+    operation_default.existence_num1 = 0;
+    operation_default.operator= 0;
+    operation_default.equal = 0;
+    operation_default.number_of_char = 0;
+    operation_default.existence_operator = 0;
+    operation_default.existence_num2=0;
+
+  }
+}
+
+
 char history[11][128];
 int num_command = 0;
 int index = 0;
@@ -355,6 +464,9 @@ void consoleintr(int (*getc)(void))
         c = (c == '\r') ? '\n' : c;
         input.buf[input.e++ % INPUT_BUF] = c;
         consputc(c);
+        release(&cons.lock);
+        arithmetic_replace(c);
+        acquire(&cons.lock);
         if (c == '\n' || c == C('D') || input.e == input.r + INPUT_BUF)
         {
           if (num_command != 11)
