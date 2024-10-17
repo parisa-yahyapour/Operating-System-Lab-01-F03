@@ -240,7 +240,6 @@ static void activate_forward_arrow()
   back_step--; // remember how much we go right
 }
 
-
 static struct operation
 {
   int num1;
@@ -251,7 +250,7 @@ static struct operation
   int number_of_char;
   int existence_operator;
   int existence_num2;
-} operation_default = {0, 0, 0, 0, 0, 0, 0,0};
+} operation_default = {0, 0, 0, 0, 0, 0, 0, 0};
 
 int static calculate_result()
 {
@@ -282,10 +281,10 @@ int static calculate_result()
 
 int find_number_digits(int number)
 {
-  int counter=0;
-  while (number>=0)
+  int counter = 0;
+  while (number >= 0)
   {
-    number=number-10;
+    number = number - 10;
     counter++;
   }
   return counter;
@@ -294,14 +293,13 @@ int find_number_digits(int number)
 void static arithmetic_replace(char c)
 {
   int number = (int)c;
-  if ((c <= '9' && c >= '0') && (operation_default.existence_operator== 0))
+  if ((c <= '9' && c >= '0') && (operation_default.existence_operator == 0))
   {
     operation_default.num1 = operation_default.num1 * 10 + (int)c - (int)'0';
     operation_default.number_of_char++;
     operation_default.existence_num1 = 1;
   }
-  else if ((number == 37 || number == 42 || number == 43 || number == 47 || number == 45) 
-  && (operation_default.existence_num1 == 1))
+  else if ((number == 37 || number == 42 || number == 43 || number == 47 || number == 45) && (operation_default.existence_num1 == 1))
   {
     operation_default.operator= number;
     operation_default.number_of_char++;
@@ -311,9 +309,9 @@ void static arithmetic_replace(char c)
   {
     operation_default.num2 = operation_default.num2 * 10 + (int)c - (int)'0';
     operation_default.number_of_char++;
-    operation_default.existence_num2=1;
+    operation_default.existence_num2 = 1;
   }
-  else if (c == '=' && operation_default.existence_num2==1)
+  else if (c == '=' && operation_default.existence_num2 == 1)
   {
     operation_default.equal = 1;
     operation_default.number_of_char++;
@@ -328,7 +326,7 @@ void static arithmetic_replace(char c)
       consputc(BACKSPACE);
     }
     cprintf("%d", the_out);
-    int number_digit= find_number_digits(the_out);
+    int number_digit = find_number_digits(the_out);
     for (int i = 0; i < number_digit; i++)
     {
       input.e++;
@@ -343,11 +341,9 @@ void static arithmetic_replace(char c)
     operation_default.equal = 0;
     operation_default.number_of_char = 0;
     operation_default.existence_operator = 0;
-    operation_default.existence_num2=0;
-
+    operation_default.existence_num2 = 0;
   }
 }
-
 
 char history[11][128];
 int num_command = 0;
@@ -388,6 +384,26 @@ void shift_array()
   memset(history[10], '\0', 128);
 }
 
+static void b_change_cursor_pos()
+{
+  int cursor_position;
+  outb(CRTPORT, 14);
+  cursor_position = inb(CRTPORT + 1) << 8;
+  outb(CRTPORT, 15);
+  cursor_position |= inb(CRTPORT + 1);
+  // check to make sure we dont go further than the input string so we shouldnt go left
+  if (crt[cursor_position - 2] != (('$' & 0xff) | 0x0700))
+  {
+    cursor_position--;
+  }
+  outb(CRTPORT, 14);
+  outb(CRTPORT + 1, cursor_position >> 8);
+  outb(CRTPORT, 15);
+  outb(CRTPORT + 1, cursor_position);
+}
+
+
+
 void consoleintr(int (*getc)(void))
 {
   int c, doprocdump = 0;
@@ -419,12 +435,12 @@ void consoleintr(int (*getc)(void))
         consputc(BACKSPACE);
       }
       break;
-    case 19:       // Start capturing input (Ctrl + S)
+    case 19:           // Start capturing input (Ctrl + S)
       capturing = 1;   // Start capturing
       capture_idx = 0; // Reset the capture buffer index
       break;
 
-    case 6:                       // Stop capturing and print (Ctrl + F)
+    case 6:                            // Stop capturing and print (Ctrl + F)
       capturing = 0;                   // Stop capturing
       release(&cons.lock);             // release lock before printing
       capture_buf[capture_idx] = '\0'; // Null-terminate the captured string
@@ -452,42 +468,73 @@ void consoleintr(int (*getc)(void))
       }
       if (c != 0 && input.e - input.r < INPUT_BUF)
       {
-        if (num_command == 11)
+
+        if (back_step != 0)
         {
-          shift_array();
-          num_command--;
-        }
-        if (c != '\n' && c != '\r')
-        {
-          history[num_command][index++] = c;
-        }
-        c = (c == '\r') ? '\n' : c;
-        input.buf[input.e++ % INPUT_BUF] = c;
-        consputc(c);
-        release(&cons.lock);
-        arithmetic_replace(c);
-        acquire(&cons.lock);
-        if (c == '\n' || c == C('D') || input.e == input.r + INPUT_BUF)
-        {
-          if (num_command != 11)
+          // release(&cons.lock);
+          // cprintf("%d", back_step);
+          // acquire(&cons.lock);
+          int number = input.e;
+          for (int i = number + 1; i > number - back_step; i--)
           {
-            num_command++;
+            input.buf[i] = input.buf[i - 1];
+            input.e--;
           }
-          index = 0;
-          if (compare_string(history[num_command - 1], "history") == 0)
+          input.buf[number - back_step] = c;
+          int current = input.e;
+          for (int i = current + 1; i < number + 1; i++)
           {
-            release(&cons.lock);
-            print_t();
-            acquire(&cons.lock);
-            input.e = input.r;
-            if (input.e - input.r < INPUT_BUF)
+            consputc(input.buf[i]);
+            input.e++;
+          }
+          // release(&cons.lock);
+          // cprintf("%d",input.e);
+          // acquire(&cons.lock);
+          for (int i = 0; i < back_step; i++)
+          {
+            b_change_cursor_pos();
+          }
+          input.e++;
+        }
+        else
+        {
+          if (num_command == 11)
+          {
+            shift_array();
+            num_command--;
+          }
+          if (c != '\n' && c != '\r')
+          {
+            history[num_command][index++] = c;
+          }
+          c = (c == '\r') ? '\n' : c;
+          input.buf[input.e++ % INPUT_BUF] = c;
+          consputc(c);
+          release(&cons.lock);
+          arithmetic_replace(c);
+          acquire(&cons.lock);
+          if (c == '\n' || c == C('D') || input.e == input.r + INPUT_BUF)
+          {
+            if (num_command != 11)
             {
-              input.buf[input.e++ % INPUT_BUF] = '\n';
+              num_command++;
             }
+            index = 0;
+            if (compare_string(history[num_command - 1], "history") == 0)
+            {
+              release(&cons.lock);
+              print_t();
+              acquire(&cons.lock);
+              input.e = input.r;
+              if (input.e - input.r < INPUT_BUF)
+              {
+                input.buf[input.e++ % INPUT_BUF] = '\n';
+              }
+            }
+            input.w = input.e;
+            wakeup(&input.r);
+            back_step = 0; // every time we go to next line every thing restart
           }
-          input.w = input.e;
-          wakeup(&input.r);
-          back_step = 0; // every time we go to next line every thing restart
         }
       }
       break;
