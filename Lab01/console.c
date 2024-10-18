@@ -270,12 +270,19 @@ int display_result(float x)
   int float_part=(x-integer_part)*1000;
   if (float_part==0)
   {
+              release(&cons.lock);
     cprintf("%d",integer_part);
+          acquire(&cons.lock);
+ 
   }
   else
   {
     number_disp+=4;
+               release(&cons.lock);
+
     cprintf("%d.%d",integer_part,float_part);
+          acquire(&cons.lock);
+ 
   }
   return number_disp;
 }
@@ -301,6 +308,18 @@ int static calculate_result()
     break;
   }
   return display_result(result);
+}
+
+void clear_the_struct()
+{
+    operation_default.num1 = 0;
+    operation_default.num2 = 0;
+    operation_default.existence_num1 = 0;
+    operation_default.operator= 0;
+    operation_default.equal = 0;
+    operation_default.number_of_char = 0;
+    operation_default.existence_operator = 0;
+    operation_default.existence_num2 = 0;
 }
 
 void static arithmetic_replace(char c)
@@ -342,17 +361,11 @@ void static arithmetic_replace(char c)
     {
       input.e++;
     }
+    clear_the_struct();
   }
   else
   {
-    operation_default.num1 = 0;
-    operation_default.num2 = 0;
-    operation_default.existence_num1 = 0;
-    operation_default.operator= 0;
-    operation_default.equal = 0;
-    operation_default.number_of_char = 0;
-    operation_default.existence_operator = 0;
-    operation_default.existence_num2 = 0;
+    clear_the_struct();
   }
 }
 
@@ -521,9 +534,9 @@ void consoleintr(int (*getc)(void))
           c = (c == '\r') ? '\n' : c;
           input.buf[input.e++ % INPUT_BUF] = c;
           consputc(c);
-          release(&cons.lock);
+          //release(&cons.lock);
           arithmetic_replace(c);
-          acquire(&cons.lock);
+          //acquire(&cons.lock);
           if (c == '\n' || c == C('D') || input.e == input.r + INPUT_BUF)
           {
             if (num_command != 11)
