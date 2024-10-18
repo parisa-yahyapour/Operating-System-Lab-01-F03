@@ -252,14 +252,38 @@ static struct operation
   int existence_num2;
 } operation_default = {0, 0, 0, 0, 0, 0, 0, 0};
 
+int find_number_digits(int number)
+{
+  int counter = 0;
+  while (number >= 0)
+  {
+    number = number - 10;
+    counter++;
+  }
+  return counter;
+}
+
+int display_result(float x)
+{
+  int integer_part=(int)x;
+  int number_disp=find_number_digits(integer_part);
+  int float_part=(x-integer_part)*1000;
+  if (float_part==0)
+  {
+    cprintf("%d",integer_part);
+  }
+  else
+  {
+    number_disp+=4;
+    cprintf("%d.%d",integer_part,float_part);
+  }
+  return number_disp;
+}
 int static calculate_result()
 {
-  int result;
+  float result;
   switch (operation_default.operator)
   {
-  case 37: // remainder
-    result = operation_default.num1 % operation_default.num2;
-    break;
   case 42:
     result = operation_default.num1 * operation_default.num2;
     break;
@@ -270,24 +294,13 @@ int static calculate_result()
     result = operation_default.num1 - operation_default.num2;
     break;
   case 47:
-    result = operation_default.num1 / operation_default.num2;
+    result =(float) operation_default.num1 / (float) operation_default.num2;
     break;
   default:
     result = 0;
     break;
   }
-  return result;
-}
-
-int find_number_digits(int number)
-{
-  int counter = 0;
-  while (number >= 0)
-  {
-    number = number - 10;
-    counter++;
-  }
-  return counter;
+  return display_result(result);
 }
 
 void static arithmetic_replace(char c)
@@ -318,16 +331,14 @@ void static arithmetic_replace(char c)
   }
   else if (c == '?' && operation_default.equal == 1)
   {
-    int the_out = calculate_result();
     operation_default.number_of_char++;
     for (int i = 0; i < operation_default.number_of_char; i++)
     {
       input.e--;
       consputc(BACKSPACE);
     }
-    cprintf("%d", the_out);
-    int number_digit = find_number_digits(the_out);
-    for (int i = 0; i < number_digit; i++)
+    int the_out = calculate_result();
+    for (int i = 0; i < the_out; i++)
     {
       input.e++;
     }
@@ -347,10 +358,10 @@ void static arithmetic_replace(char c)
 
 char history[11][128];
 int num_command = 0;
-
+int index = 0;
 void print_t()
 {
-  for (int i = num_command - 1; i >= 0; i--)
+  for (int i = num_command - 2; i >= 0; i--)
   {
     cprintf(history[i]);
     consputc('\n');
@@ -384,19 +395,6 @@ void shift_array()
   memset(history[10], '\0', 128);
 }
 
-void add_to_history(int strart_pointer, int end_pointer)
-{
-  int index = 0;
-  for (int i = strart_pointer; i < end_pointer; i++)
-  {
-    if (input.buf[i] != '\n' && input.buf[i] != '\r')
-    {
-      history[num_command][index] = input.buf[i];
-      index++;
-    }
-  }
-}
-
 static void b_change_cursor_pos()
 {
   int cursor_position;
@@ -414,6 +412,8 @@ static void b_change_cursor_pos()
   outb(CRTPORT, 15);
   outb(CRTPORT + 1, cursor_position);
 }
+
+
 
 void consoleintr(int (*getc)(void))
 {
@@ -514,6 +514,10 @@ void consoleintr(int (*getc)(void))
             shift_array();
             num_command--;
           }
+          if (c != '\n' && c != '\r')
+          {
+            history[num_command][index++] = c;
+          }
           c = (c == '\r') ? '\n' : c;
           input.buf[input.e++ % INPUT_BUF] = c;
           consputc(c);
@@ -522,8 +526,12 @@ void consoleintr(int (*getc)(void))
           acquire(&cons.lock);
           if (c == '\n' || c == C('D') || input.e == input.r + INPUT_BUF)
           {
-            add_to_history(input.r, input.e);
-            if (compare_string(history[num_command], "history") == 0)
+            if (num_command != 11)
+            {
+              num_command++;
+            }
+            index = 0;
+            if (compare_string(history[num_command - 1], "history") == 0)
             {
               release(&cons.lock);
               print_t();
@@ -533,10 +541,6 @@ void consoleintr(int (*getc)(void))
               {
                 input.buf[input.e++ % INPUT_BUF] = '\n';
               }
-            }
-            if (num_command != 11)
-            {
-              num_command++;
             }
             input.w = input.e;
             wakeup(&input.r);
