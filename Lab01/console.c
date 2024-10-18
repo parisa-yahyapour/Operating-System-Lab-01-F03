@@ -455,18 +455,19 @@ void consoleintr(int (*getc)(void))
       {
         input.e--;
         consputc(BACKSPACE);
+        capture_idx--;
       }
       break;
-    case 19:           // Start capturing input (Ctrl + S)
+    case C('S'):        // Start capturing input (Ctrl + S)
       capturing = 1;   // Start capturing
       capture_idx = 0; // Reset the capture buffer index
       break;
 
-    case 6:                            // Stop capturing and print (Ctrl + F)
+    case C('F'):                       // Stop capturing and print (Ctrl + F)
       capturing = 0;                   // Stop capturing
       capture_buf[capture_idx] = '\0'; // Null-terminate the captured string
       release(&cons.lock);             // release lock before printing
-      for (int i = 2; i < capture_idx - 2; i+=2) // Print captured text
+      for (int i = 0; i < capture_idx ; i++) // Print captured text
       {
         consputc((char)capture_buf[i]); 
       }
@@ -483,18 +484,17 @@ void consoleintr(int (*getc)(void))
       }
       break;
     default:
-      if (capturing)
+      if (capturing && capture_idx < INPUT_BUF - 1) // If we're capturing, store the input into capture_buf
       {
-        // If we're capturing, store the input into capture_buf
-        if (capture_idx < INPUT_BUF - 1)  // Ensure we don't overflow
-        { 
+          if(c == 0)  //Ignore releasing keys
+          {
+            break;
+          }
           capture_buf[capture_idx] = c;
           capture_idx += 1;
-        }
       }
       if (c != 0 && input.e - input.r < INPUT_BUF)
       {
-
         if (back_step != 0)
         {
           int number = input.e;
