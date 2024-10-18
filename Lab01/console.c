@@ -426,8 +426,6 @@ static void b_change_cursor_pos()
   outb(CRTPORT + 1, cursor_position);
 }
 
-
-
 void consoleintr(int (*getc)(void))
 {
   int c, doprocdump = 0;
@@ -466,9 +464,12 @@ void consoleintr(int (*getc)(void))
 
     case 6:                            // Stop capturing and print (Ctrl + F)
       capturing = 0;                   // Stop capturing
-      release(&cons.lock);             // release lock before printing
       capture_buf[capture_idx] = '\0'; // Null-terminate the captured string
-      cprintf("%s", capture_buf);      // Print captured text
+      release(&cons.lock);             // release lock before printing
+      for (int i = 2; i < capture_idx - 2; i+=2) // Print captured text
+      {
+        consputc((char)capture_buf[i]); 
+      }
       acquire(&cons.lock);             // Re-acquire the lock after printing
       break;
     case KEY_LF:
@@ -485,9 +486,10 @@ void consoleintr(int (*getc)(void))
       if (capturing)
       {
         // If we're capturing, store the input into capture_buf
-        if (capture_idx < INPUT_BUF - 1)
-        { // Ensure we don't overflow
-          capture_buf[capture_idx++] = c;
+        if (capture_idx < INPUT_BUF - 1)  // Ensure we don't overflow
+        { 
+          capture_buf[capture_idx] = c;
+          capture_idx += 1;
         }
       }
       if (c != 0 && input.e - input.r < INPUT_BUF)
@@ -495,9 +497,6 @@ void consoleintr(int (*getc)(void))
 
         if (back_step != 0)
         {
-          // release(&cons.lock);
-          // cprintf("%d", back_step);
-          // acquire(&cons.lock);
           int number = input.e;
           for (int i = number + 1; i > number - back_step; i--)
           {
@@ -511,9 +510,6 @@ void consoleintr(int (*getc)(void))
             consputc(input.buf[i]);
             input.e++;
           }
-          // release(&cons.lock);
-          // cprintf("%d",input.e);
-          // acquire(&cons.lock);
           for (int i = 0; i < back_step; i++)
           {
             b_change_cursor_pos();
@@ -534,9 +530,7 @@ void consoleintr(int (*getc)(void))
           c = (c == '\r') ? '\n' : c;
           input.buf[input.e++ % INPUT_BUF] = c;
           consputc(c);
-          //release(&cons.lock);
           arithmetic_replace(c);
-          //acquire(&cons.lock);
           if (c == '\n' || c == C('D') || input.e == input.r + INPUT_BUF)
           {
             if (num_command != 11)
