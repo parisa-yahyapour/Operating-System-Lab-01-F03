@@ -18,6 +18,8 @@
 static void consputc(int);
 #define KEY_LF 0xE4
 #define KEY_RT 0xE5
+#define KEY_UP 0xE2
+#define KEY_DN 0xE3
 static int panicked = 0;
 static int back_step = 0;
 
@@ -265,24 +267,22 @@ int find_number_digits(int number)
 
 int display_result(float x)
 {
-  int integer_part=(int)x;
-  int number_disp=find_number_digits(integer_part);
-  int float_part=(x-integer_part)*1000;
-  if (float_part==0)
+  int integer_part = (int)x;
+  int number_disp = find_number_digits(integer_part);
+  int float_part = (x - integer_part) * 1000;
+  if (float_part == 0)
   {
-              release(&cons.lock);
-    cprintf("%d",integer_part);
-          acquire(&cons.lock);
- 
+    release(&cons.lock);
+    cprintf("%d", integer_part);
+    acquire(&cons.lock);
   }
   else
   {
-    number_disp+=4;
-               release(&cons.lock);
+    number_disp += 4;
+    release(&cons.lock);
 
-    cprintf("%d.%d",integer_part,float_part);
-          acquire(&cons.lock);
- 
+    cprintf("%d.%d", integer_part, float_part);
+    acquire(&cons.lock);
   }
   return number_disp;
 }
@@ -301,7 +301,7 @@ int static calculate_result()
     result = operation_default.num1 - operation_default.num2;
     break;
   case 47:
-    result =(float) operation_default.num1 / (float) operation_default.num2;
+    result = (float)operation_default.num1 / (float)operation_default.num2;
     break;
   default:
     result = 0;
@@ -312,14 +312,14 @@ int static calculate_result()
 
 void clear_the_struct()
 {
-    operation_default.num1 = 0;
-    operation_default.num2 = 0;
-    operation_default.existence_num1 = 0;
-    operation_default.operator= 0;
-    operation_default.equal = 0;
-    operation_default.number_of_char = 0;
-    operation_default.existence_operator = 0;
-    operation_default.existence_num2 = 0;
+  operation_default.num1 = 0;
+  operation_default.num2 = 0;
+  operation_default.existence_num1 = 0;
+  operation_default.operator= 0;
+  operation_default.equal = 0;
+  operation_default.number_of_char = 0;
+  operation_default.existence_operator = 0;
+  operation_default.existence_num2 = 0;
 }
 
 void static arithmetic_replace(char c)
@@ -368,15 +368,22 @@ void static arithmetic_replace(char c)
     clear_the_struct();
   }
 }
+struct Command
+{
+  char command_text[128];
+  int command_length;
+};
 
-char history[11][128];
+struct Command history[11];
+// char history[11][128];
 int num_command = 0;
-int index = 0;
+int current_num_command = -1;
+
 void print_t()
 {
-  for (int i = num_command - 2; i >= 0; i--)
+  for (int i = num_command - 1; i >= 0; i--)
   {
-    cprintf(history[i]);
+    cprintf(history[i].command_text);
     consputc('\n');
   }
 }
@@ -402,10 +409,96 @@ void shift_array()
 {
   for (int i = 1; i < 11; i++)
   {
-    memset(history[i - 1], '\0', 128);
-    safestrcpy(history[i - 1], history[i], 128);
+    memset(history[i - 1].command_text, '\0', 128);
+    safestrcpy(history[i - 1].command_text, history[i].command_text, 128);
+    history[i - 1].command_length = history[i].command_length;
+    history[i].command_length = 0;
   }
-  memset(history[10], '\0', 128);
+  memset(history[10].command_text, '\0', 128);
+  history[10].command_length = 0;
+}
+void add_to_history(int strart_pointer, int end_pointer)
+{
+  int index = 0;
+  int lenght = 0;
+  for (int i = strart_pointer; i < end_pointer; i++)
+  {
+    if (input.buf[i % INPUT_BUF] != '\n' && input.buf[i % INPUT_BUF] != '\r')
+    {
+      history[num_command].command_text[index] = input.buf[i];
+      index++;
+      lenght++;
+    }
+  }
+  history[num_command].command_length = lenght;
+}
+#define UP 0
+#define DOWN 1
+
+void add_to_buffer(char text[128], int length)
+{
+  int index = input.r % INPUT_BUF;
+  for (int i = 0; i < length; i++)
+  {
+    input.buf[index] = text[i];
+    index++;
+    input.e++;
+  }
+  input.e++;
+}
+
+void clear_current_command(int lenght)
+{
+  for (int i = 0; i < lenght; i++)
+  {
+    consputc(BACKSPACE);
+    input.e--;
+  }
+}
+
+void show_previous_command(int direction)
+{
+  if (current_num_command == num_command)
+  {
+    // input.e = input.r - 1;
+    // current_num_command = -1;
+    return;
+  }
+  if (current_num_command == -1 && direction == UP)
+  {
+    current_num_command = num_command - 1;
+  }
+  else
+  {
+    switch (direction)
+    {
+    case UP:
+      if (current_num_command == 0)
+      {
+        return;
+      }
+      clear_current_command(history[current_num_command].command_length);
+      current_num_command--;
+      break;
+    case DOWN:
+      if (current_num_command == num_command)
+      {
+        input.e = input.r - 1;
+        //current_num_command = -1;
+        return;
+      }
+      clear_current_command(history[current_num_command].command_length);
+      current_num_command++;
+      break;
+    default:
+      current_num_command = -1;
+      break;
+    }
+  }
+  release(&cons.lock);
+  cprintf(history[current_num_command].command_text);
+  add_to_buffer(history[current_num_command].command_text, history[current_num_command].command_length);
+  acquire(&cons.lock);
 }
 
 static void b_change_cursor_pos()
@@ -458,20 +551,20 @@ void consoleintr(int (*getc)(void))
         capture_idx--;
       }
       break;
-    case C('S'):        // Start capturing input (Ctrl + S)
+    case C('S'):       // Start capturing input (Ctrl + S)
       capturing = 1;   // Start capturing
       capture_idx = 0; // Reset the capture buffer index
       break;
 
-    case C('F'):                       // Stop capturing and print (Ctrl + F)
-      capturing = 0;                   // Stop capturing
-      capture_buf[capture_idx] = '\0'; // Null-terminate the captured string
-      release(&cons.lock);             // release lock before printing
-      for (int i = 0; i < capture_idx ; i++) // Print captured text
+    case C('F'):                            // Stop capturing and print (Ctrl + F)
+      capturing = 0;                        // Stop capturing
+      capture_buf[capture_idx] = '\0';      // Null-terminate the captured string
+      release(&cons.lock);                  // release lock before printing
+      for (int i = 0; i < capture_idx; i++) // Print captured text
       {
-        consputc((char)capture_buf[i]); 
+        consputc((char)capture_buf[i]);
       }
-      acquire(&cons.lock);             // Re-acquire the lock after printing
+      acquire(&cons.lock); // Re-acquire the lock after printing
       break;
     case KEY_LF:
       if ((input.e - back_step) > input.w)
@@ -483,15 +576,23 @@ void consoleintr(int (*getc)(void))
         activate_forward_arrow();
       }
       break;
+    case KEY_UP:
+      input.e--;
+      show_previous_command(UP);
+      break;
+    case KEY_DN:
+      input.e--;
+      show_previous_command(DOWN);
+      break;
     default:
       if (capturing && capture_idx < INPUT_BUF - 1) // If we're capturing, store the input into capture_buf
       {
-          if(c == 0)  //Ignore releasing keys
-          {
-            break;
-          }
-          capture_buf[capture_idx] = c;
-          capture_idx += 1;
+        if (c == 0) // Ignore releasing keys
+        {
+          break;
+        }
+        capture_buf[capture_idx] = c;
+        capture_idx += 1;
       }
       if (c != 0 && input.e - input.r < INPUT_BUF)
       {
@@ -523,22 +624,15 @@ void consoleintr(int (*getc)(void))
             shift_array();
             num_command--;
           }
-          if (c != '\n' && c != '\r')
-          {
-            history[num_command][index++] = c;
-          }
           c = (c == '\r') ? '\n' : c;
           input.buf[input.e++ % INPUT_BUF] = c;
           consputc(c);
           arithmetic_replace(c);
           if (c == '\n' || c == C('D') || input.e == input.r + INPUT_BUF)
           {
-            if (num_command != 11)
-            {
-              num_command++;
-            }
-            index = 0;
-            if (compare_string(history[num_command - 1], "history") == 0)
+            current_num_command = -1;
+            add_to_history(input.r % INPUT_BUF, input.e % INPUT_BUF);
+            if (compare_string(history[num_command].command_text, "history") == 0)
             {
               release(&cons.lock);
               print_t();
@@ -548,6 +642,10 @@ void consoleintr(int (*getc)(void))
               {
                 input.buf[input.e++ % INPUT_BUF] = '\n';
               }
+            }
+            if (num_command != 11)
+            {
+              num_command++;
             }
             input.w = input.e;
             wakeup(&input.r);
