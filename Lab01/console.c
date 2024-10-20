@@ -269,7 +269,7 @@ int display_result(float x)
 {
   int integer_part = (int)x;
   int number_disp = find_number_digits(integer_part);
-  int float_part = (x - integer_part) * 1000;
+  int float_part = (x - integer_part) * 10;
   if (float_part == 0)
   {
     release(&cons.lock);
@@ -278,7 +278,7 @@ int display_result(float x)
   }
   else
   {
-    number_disp += 4;
+    number_disp += 2;
     release(&cons.lock);
 
     cprintf("%d.%d", integer_part, float_part);
