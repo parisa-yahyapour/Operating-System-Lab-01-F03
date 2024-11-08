@@ -182,6 +182,7 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_pid\
+	_system_call_count\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

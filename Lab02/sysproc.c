@@ -89,3 +89,11 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+extern int list_all_pro(void);
+int sys_list_all_pro(void)
+{
+  cprintf("Enter kernel\n");
+  list_all_pro();
+  return 0;
+}

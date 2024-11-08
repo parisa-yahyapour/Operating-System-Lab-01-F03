@@ -88,6 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->system_call_count=0;
 
   release(&ptable.lock);
 
@@ -531,4 +532,21 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int list_all_pro(void)
+{
+  struct proc *p;
+  cprintf("\nPrint Info\n");
+  for ( p=ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->state != UNUSED)
+    {
+      cprintf("Name: %s-PID: %d-number of system calls %d \n",p->name,p->pid,p->system_call_count);
+    }
+    
+  }
+  return 0;
+
+
 }
