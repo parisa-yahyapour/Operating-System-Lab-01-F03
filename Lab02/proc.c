@@ -550,3 +550,16 @@ int list_all_pro(void)
 
 
 }
+
+int create_palindrome(int num)
+{
+  int reversed = 0, remainder;
+  int original = num;
+  while (num != 0) {
+    remainder = num % 10;
+    reversed = reversed * 10 + remainder;
+    num /= 10;
+  }
+  cprintf("palindrome :%d%d\n",original,reversed);
+  return 0;
+}

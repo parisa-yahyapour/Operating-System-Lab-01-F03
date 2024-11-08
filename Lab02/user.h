@@ -41,3 +41,4 @@ void free(void*);
 int atoi(const char*);
 
 int list_all_pro(void);
+int create_palindrome(void);

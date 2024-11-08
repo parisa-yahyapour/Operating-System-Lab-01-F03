@@ -97,3 +97,10 @@ int sys_list_all_pro(void)
   list_all_pro();
   return 0;
 }
+
+int sys_create_palindrome(void)
+{
+  int n=myproc()->tf->ebx;
+  create_palindrome(n);
+  return 0;
+}
