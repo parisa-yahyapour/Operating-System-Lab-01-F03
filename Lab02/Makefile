@@ -184,6 +184,7 @@ UPROGS=\
 	_pid\
 	_system_call_count\
 	_create_palindrome\
+	_test_move_file\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -252,7 +253,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 
 EXTRA=\
 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
-	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c create_palindrome.c\
+	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c create_palindrome.c test_move_file.c\
 	printf.c umalloc.c\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
