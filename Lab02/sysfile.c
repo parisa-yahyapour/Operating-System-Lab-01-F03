@@ -463,12 +463,9 @@ int sys_move_file(void)
 
   if (argstr(0, &source_path) < 0 || argstr(1, &destination_path) < 0)
   {
-    // cprintf("a\n");
+    cprintf("Error at the beginning\n");
     return -1;
   }
-
-  // cprintf("source: %s\n", source_path);
-  // cprintf("destination: %s\n", destination_path);
   begin_op();
 
   struct inode *source_inode = namei(source_path);
@@ -497,27 +494,18 @@ int sys_move_file(void)
     length++;
   }
   address[length] = '\0';
-  cprintf("address: %s\n", address);
   char *result = address;
   struct inode *destination_inode = create(result, T_FILE, 0, 0);
-  //cprintf("here\n");
   if (destination_inode == 0)
   {
     cprintf("Destination directory does not exists!\n");
     iunlockput(source_inode);
     return -1;
   }
-  //cprintf("meow3\n");
-  // ilock(destination_inode);
-  //cprintf("pishi1\n");
   int num_bytes;
-  //cprintf("pishi2\n");
   char buffer[512];
-  //cprintf("pishi3\n");
   struct file *source_file = filealloc();
-  // cprintf("pishi4\n");
   struct file *destination_file = filealloc();
-  // cprintf("pishi5\n");
   if (!source_file || !destination_file)
   {
     cprintf("Error in copying file!\n");
@@ -525,7 +513,6 @@ int sys_move_file(void)
     iunlockput(destination_inode);
     return -1;
   }
-  // cprintf("meow4\n");
   source_file->ip = source_inode;
   destination_file->ip = destination_inode;
   while ((num_bytes = readi(source_inode, buffer, destination_file->off, sizeof(buffer))) > 0)
@@ -539,7 +526,6 @@ int sys_move_file(void)
     }
     destination_file->off += num_bytes;
   }
-  // cprintf("meow5\n");
   iunlockput(source_inode);
   iunlockput(destination_inode);
   if (argstr(0, &source_path) < 0 || sys_unlink() < 0)
