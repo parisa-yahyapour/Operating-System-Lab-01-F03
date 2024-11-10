@@ -104,3 +104,15 @@ int sys_create_palindrome(void)
   create_palindrome(n);
   return 0;
 }
+
+int sys_get_most_invoked_syscall(void)
+{
+  int pid;
+  if (argint(0, &pid) < 0)
+  {
+    cprintf("Invalid input\n");
+    return -1;
+  }
+  int result = get_most_invoked_syscall(pid);
+  return result;
+}

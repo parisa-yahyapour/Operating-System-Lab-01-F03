@@ -45,3 +45,4 @@ int create_palindrome(void);
 
 int move_file(const char *source_path, const char *destination_path);
 int sort_syscalls(int pid);
+int get_most_invoked_syscall(int pid);

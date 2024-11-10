@@ -48,11 +48,12 @@ enum procstate
 // Per-process state
 struct proc
 {
-  uint sz;                    // Size of process memory (bytes)
-  pde_t *pgdir;               // Page table
-  char *kstack;               // Bottom of kernel stack for this process
-  enum procstate state;       // Process state
-  int pid;                    // Process ID
+  uint sz;              // Size of process memory (bytes)
+  pde_t *pgdir;         // Page table
+  char *kstack;         // Bottom of kernel stack for this process
+  enum procstate state; // Process state
+  int pid;              // Process ID
+  int history[NPROC];
   int system_call_count;      // Process systemcalls
   int syscalls[MAX_SYSCALLS]; // Array to store unique syscall IDs
   int unique_syscalls_count;  // Number of unique system calls made
@@ -71,3 +72,7 @@ struct proc
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
+
+
+#define NULL ((void *)0)
+struct proc *find_process_by_pid(int pid);
