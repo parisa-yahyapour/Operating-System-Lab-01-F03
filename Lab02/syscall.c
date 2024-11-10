@@ -106,6 +106,7 @@ extern int sys_uptime(void);
 extern int sys_list_all_pro(void);
 extern int sys_create_palindrome(void);
 extern int sys_move_file(void);
+extern int sys_sort_syscalls(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -131,22 +132,40 @@ static int (*syscalls[])(void) = {
 [SYS_close]   sys_close,
 [SYS_list_all_pro] sys_list_all_pro,
 [SYS_create_palindrome] sys_create_palindrome,
-[SYS_move_file] sys_move_file,
+[SYS_move_file] sys_move_file,\
+[SYS_sort_syscalls] sys_sort_syscalls,
 
 };
 
-void
-syscall(void)
+void syscall(void)
 {
   int num;
   struct proc *curproc = myproc();
 
   num = curproc->tf->eax;
-  if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
+  if (num > 0 && num < NELEM(syscalls) && syscalls[num])
+  {
     curproc->system_call_count++;
+    int is_unique = 1;
+
+    for (int i = 0; i < curproc->unique_syscalls_count; i++)
+    {
+      if (curproc->syscalls[i] == num)
+      {
+        is_unique = 0;
+        break;
+      }
+    }
+    // If unique, add to syscalls list
+    if (is_unique && curproc->unique_syscalls_count < MAX_SYSCALLS)
+    {
+      curproc->syscalls[curproc->unique_syscalls_count++] = num;
+    }
 
     curproc->tf->eax = syscalls[num]();
-  } else {
+  }
+  else
+  {
     cprintf("%d %s: unknown sys call %d\n",
             curproc->pid, curproc->name, num);
     curproc->tf->eax = -1;

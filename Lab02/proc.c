@@ -563,3 +563,44 @@ int create_palindrome(int num)
   cprintf("palindrome :%d%d\n",original,reversed);
   return 0;
 }
+
+struct proc* findproc(int pid) {
+    struct proc *p;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+        if (p->pid == pid) return p;
+    }
+    return 0;
+}
+
+// Sort syscalls by ID
+void sort_syscalls(int syscalls[MAX_SYSCALLS], int count) {
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = i + 1; j < count; j++) {
+            if (syscalls[i] > syscalls[j]) {
+                int temp = syscalls[i];
+                syscalls[i] = syscalls[j];
+                syscalls[j] = temp;
+            }
+        }
+    }
+}
+
+int sys_sort_syscalls(void) {
+    int pid;
+    if (argint(0, &pid) < 0) return -1;
+
+    struct proc *p = findproc(pid);
+    if (!p) // Process not found
+    {
+        cprintf("Process not found!\n");
+        return -1; 
+    }
+    // Sort system calls for this process
+    sort_syscalls(p->syscalls, p->unique_syscalls_count);
+
+    // Print the sorted system calls
+    for (int i = 0; i < p->unique_syscalls_count; i++) {
+        cprintf("Syscall %d\n", p->syscalls[i]);
+    }
+    return 0;
+}

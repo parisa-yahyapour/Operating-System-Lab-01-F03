@@ -185,6 +185,7 @@ UPROGS=\
 	_system_call_count\
 	_create_palindrome\
 	_test_move_file\
+	_testsort\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
