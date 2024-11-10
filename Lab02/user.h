@@ -40,7 +40,7 @@ void *malloc(uint);
 void free(void *);
 int atoi(const char *);
 
-int list_all_pro(void);
+int list_all_processes(void);
 void create_palindrome(void);
 
 int move_file(const char *source_path, const char *destination_path);

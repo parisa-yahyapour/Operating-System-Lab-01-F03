@@ -544,13 +544,13 @@ void procdump(void)
   }
 }
 
-int list_all_pro(void)
+int list_all_processes(void)
 {
   struct proc *p;
-  cprintf("\nPrint Info\n");
+  cprintf("Print Info\n");
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
-    if (p->state != UNUSED)
+    if (p->state == RUNNING)
     {
       cprintf("Name: %s-PID: %d-number of system calls %d \n", p->name, p->pid, p->system_call_count);
     }

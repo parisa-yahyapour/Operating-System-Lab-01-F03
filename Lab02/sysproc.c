@@ -84,11 +84,11 @@ int sys_uptime(void)
   return xticks;
 }
 
-extern int list_all_pro(void);
-int sys_list_all_pro(void)
+extern int list_all_processes(void);
+int sys_list_all_processes(void)
 {
   cprintf("Enter kernel\n");
-  list_all_pro();
+  list_all_processes();
   return 0;
 }
 
