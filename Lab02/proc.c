@@ -558,7 +558,7 @@ int list_all_pro(void)
   return 0;
 }
 
-int create_palindrome(int num)
+void create_palindrome(int num)
 {
   int reversed = 0, remainder;
   int original = num;
@@ -568,8 +568,14 @@ int create_palindrome(int num)
     reversed = reversed * 10 + remainder;
     num /= 10;
   }
-  cprintf("palindrome :%d%d\n", original, reversed);
-  return 0;
+  if (reversed==0)
+  { 
+    cprintf("palindrome :%d00%d\n", original, reversed);
+  }
+  else
+  {
+      cprintf("palindrome :%d%d\n", original, reversed);
+  }
 }
 
 struct proc *findproc(int pid)

@@ -188,5 +188,5 @@ void            clearpteu(pde_t *pgdir, char *uva);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
-int create_palindrome(int);
+void create_palindrome(int);
 int get_most_invoked_syscall(int);

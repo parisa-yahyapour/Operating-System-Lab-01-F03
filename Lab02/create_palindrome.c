@@ -11,7 +11,6 @@ int main(int argc, char *argv[])
         : "=r"(last_value)
         : "r"(number));
     create_palindrome();
-    // printf(1, "The num%d\n", number);
     asm("movl %0, %%ebx"
         :
         : "r"(last_value));
