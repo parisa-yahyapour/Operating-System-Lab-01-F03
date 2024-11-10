@@ -76,3 +76,5 @@ struct proc
 
 #define NULL ((void *)0)
 struct proc *find_process_by_pid(int pid);
+struct proc *findproc(int pid);
+void sort_syscalls(int syscalls[MAX_SYSCALLS], int count);

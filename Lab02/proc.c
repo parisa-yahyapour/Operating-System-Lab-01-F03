@@ -600,29 +600,6 @@ void sort_syscalls(int syscalls[MAX_SYSCALLS], int count)
   }
 }
 
-int sys_sort_syscalls(void)
-{
-  int pid;
-  if (argint(0, &pid) < 0)
-    return -1;
-
-  struct proc *p = findproc(pid);
-  if (!p) // Process not found
-  {
-    cprintf("Process not found!\n");
-    return -1;
-  }
-  // Sort system calls for this process
-  sort_syscalls(p->syscalls, p->unique_syscalls_count);
-
-  // Print the sorted system calls
-  for (int i = 0; i < p->unique_syscalls_count; i++)
-  {
-    cprintf("Syscall %d\n", p->syscalls[i]);
-  }
-  return 0;
-}
-
 struct proc *find_process_by_pid(int pid)
 {
   struct proc *p;
