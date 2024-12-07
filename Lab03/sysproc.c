@@ -89,3 +89,17 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+extern int change_queue(int pid, int new_queue);
+
+
+int sys_change_scheduling_queue(void) {
+    int queue_number, pid;
+   
+    // Get arguments from the user space
+    if (argint(0, &pid) < 0 || argint(1, &queue_number) < 0)
+        return -1;
+    // Call the function to change the queue
+    int a=change_queue(pid, queue_number);
+    return a;
+}

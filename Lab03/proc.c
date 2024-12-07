@@ -663,3 +663,41 @@ void procdump(void)
     cprintf("\n");
   }
 }
+
+int change_queue(int pid, int new_queue) {
+    struct proc *p;
+    int old_queue = -1;
+
+    // Check if the new_queue is unset, and assign it based on pid
+    // if (new_queue == UNSET) {
+    //     if (pid == 1)
+    //         new_queue = ROUND_ROBIN;
+    //     else if (pid > 1)
+    //         new_queue = LCFS;
+    //     else
+    //         return -1;
+    // }
+
+    // Acquire lock to modify the process table
+
+    acquire(&ptable.lock);
+
+    // Find the process with the given pid and change its queue
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+        if (p->pid == pid) {
+            // cprintf("pre: %d",p->priority_level);
+
+            old_queue = p->priority_level;
+            p->priority_level= new_queue;
+            // cprintf("post: %d",p->priority_level);
+
+            //p->sched_info.arrival_queue_time = ticks; // Update the arrival time for the new queue
+            break;
+        }
+    }
+
+    // Release the process table lock
+    release(&ptable.lock);
+
+    return old_queue;
+}
