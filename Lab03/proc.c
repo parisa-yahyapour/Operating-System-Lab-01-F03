@@ -701,3 +701,23 @@ int change_queue(int pid, int new_queue) {
 
     return old_queue;
 }
+
+void set_process_parameter(int pid, int confidence, int time_burst)
+{
+  struct proc *p = 0;
+  //cprintf("%d %d %d\n", time_burst, confidence, pid);
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->pid == pid)
+    {
+      cprintf("before: time: %d conf: %d name: %s\n", p->time_burst, p->confidence, p->name);
+      break;
+    }
+  }
+  if (p != 0)
+  {
+    p->time_burst = time_burst;
+    p->confidence = confidence;
+    cprintf("after: time: %d conf: %d\n", p->time_burst, p->confidence);
+  }
+}

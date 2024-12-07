@@ -62,3 +62,6 @@ struct proc {
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
+
+
+void set_process_parameter(int pid, int confidence, int time_burst);

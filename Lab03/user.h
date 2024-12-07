@@ -38,3 +38,6 @@ void* malloc(uint);
 void free(void*);
 int atoi(const char*);
 int change_queue(int pid, int new_queue);
+
+
+void set_process_parameter(int pid, int confidence, int time_burst);

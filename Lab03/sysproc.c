@@ -103,3 +103,15 @@ int sys_change_scheduling_queue(void) {
     int a=change_queue(pid, queue_number);
     return a;
 }
+
+int sys_set_process_parameter(void)
+{
+  int pid, confidence, time_burst;
+  if (argint(0, &pid) < 0 || argint(1, &time_burst) < 0 || argint(2, &confidence) < 0)
+  {
+    return -1;
+  }
+  set_process_parameter(pid, time_burst, confidence);
+  //cprintf("hi\n");
+  return 0;
+}
