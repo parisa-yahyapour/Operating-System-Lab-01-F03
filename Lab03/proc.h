@@ -52,6 +52,9 @@ struct proc {
   uint ticks_queued;           // Time when the process entered ready queue
   int priority_level;
   int tick_count;
+  int time_burst;
+  int confidence;
+  int is_checked;             // 0 is not checked 1 is checked
 };
 
 // Process memory is laid out contiguously, low addresses first:

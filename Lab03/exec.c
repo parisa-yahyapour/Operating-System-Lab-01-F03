@@ -99,6 +99,9 @@ exec(char *path, char **argv)
   curproc->sz = sz;
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
+  curproc->time_burst = 2;
+  curproc->confidence = 50;
+  curproc->is_checked = 0;
   switchuvm(curproc);
   freevm(oldpgdir);
   return 0;

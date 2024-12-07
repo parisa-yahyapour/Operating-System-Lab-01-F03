@@ -91,7 +91,7 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->tick_count = 0;
-  p->priority_level=1;//i change it 
+  p->priority_level = 2; // i change it
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -141,6 +141,9 @@ void userinit(void)
   p->tf->eflags = FL_IF;
   p->tf->esp = PGSIZE;
   p->tf->eip = 0; // beginning of initcode.S
+  p->confidence = 50;
+  p->time_burst = 2;
+  p->is_checked = 0;
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
@@ -209,6 +212,9 @@ int fork(void)
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
+  np->confidence = 50;
+  np->time_burst = 2;
+  np->is_checked = 0;
 
   for (i = 0; i < NOFILE; i++)
     if (curproc->ofile[i])
@@ -400,6 +406,60 @@ void Round_Robin(void)
     c->proc = 0;
   }
 }
+
+void SJF(void)
+{
+  struct proc *p, *shortest = 0;
+  struct cpu *c = mycpu();
+  c->proc = 0;
+  shortest = 0;
+  // cprintf("a\n");
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->state != RUNNABLE)
+      continue;
+    // cprintf("shortest %d\n", p->time_burst);
+    if ((!shortest || p->time_burst < shortest->time_burst) && p->is_checked == 0 && p->pid != 0)
+    {
+      // cprintf("b\n");
+      shortest = p;
+    }
+    // Switch to chosen process.  It is the process's job
+    // to release ptable.lock and then reacquire it
+    // before jumping back to us.
+  }
+  // cprintf("c\n");
+  if (shortest)
+  {
+    // cprintf("d\n");
+    int random = 10;
+    if (shortest->confidence > random)
+    {
+      p = shortest;
+      c->proc = p;
+      struct proc *temp;
+      for (temp = ptable.proc; temp < &ptable.proc[NPROC]; temp++)
+      {
+        temp->is_checked = 0;
+      }
+      switchuvm(p);
+      p->state = RUNNING;
+
+      swtch(&(c->scheduler), p->context);
+      switchkvm();
+
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      c->proc = 0;
+      // cprintf("e\n");
+    }
+    else
+    {
+      cprintf("f\n");
+      shortest->is_checked = 1;
+    }
+  }
+}
 void scheduler(void)
 {
   for (;;)
@@ -409,7 +469,8 @@ void scheduler(void)
 
     // Lock process table to search for a runnable process
     acquire(&ptable.lock);
-    Round_Robin();
+    // Round_Robin();
+    SJF();
     // Call FCFS to find the next process to run
     // int process_found = FCFS();
     // if (process_found) {
