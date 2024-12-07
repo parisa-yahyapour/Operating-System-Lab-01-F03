@@ -90,7 +90,8 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-
+  p->tick_count = 0;
+  p->priority_level=1;//i change it 
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -342,53 +343,79 @@ int FCFS(void)
 
   c->proc = 0; // No process is running initially
 
-    chosen_proc = 0;
+  chosen_proc = 0;
 
-    // Select the process with the smallest ticks_queued
-    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  // Select the process with the smallest ticks_queued
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->state != RUNNABLE)
+      continue;
+
+    if (!chosen_proc || p->ticks_queued < chosen_proc->ticks_queued)
     {
-      if (p->state != RUNNABLE)
-        continue;
-
-      if (!chosen_proc || p->ticks_queued < chosen_proc->ticks_queued)
-      {
-        chosen_proc = p;
-      }
+      chosen_proc = p;
     }
+  }
 
-    if (chosen_proc)
-    {
-      process_found = 1;
-      // Switch to the chosen process
-      c->proc = chosen_proc;
-      switchuvm(c->proc);
-      c->proc->state = RUNNING;
+  if (chosen_proc)
+  {
+    process_found = 1;
+    // Switch to the chosen process
+    c->proc = chosen_proc;
+    switchuvm(c->proc);
+    c->proc->state = RUNNING;
 
-      swtch(&c->scheduler, c->proc->context); // Context switch
-      switchkvm();
+    swtch(&c->scheduler, c->proc->context); // Context switch
+    switchkvm();
 
-      // Process is done running
-      c->proc = 0;
-    }
+    // Process is done running
+    c->proc = 0;
+  }
 
   return process_found;
 }
 
+void Round_Robin(void)
+{
+  struct proc *p;
+  struct cpu *c = mycpu();
+  c->proc = 0;
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->state != RUNNABLE)
+      continue;
+
+    // Switch to chosen process.  It is the process's job
+    // to release ptable.lock and then reacquire it
+    // before jumping back to us.
+    c->proc = p;
+    switchuvm(p);
+    p->state = RUNNING;
+
+    swtch(&(c->scheduler), p->context);
+    switchkvm();
+
+    // Process is done running for now.
+    // It should have changed its p->state before coming back.
+    c->proc = 0;
+  }
+}
 void scheduler(void)
 {
-  for (;;) {
-        // Enable interrupts on this CPU
-        sti();
+  for (;;)
+  {
+    // Enable interrupts on this CPU
+    sti();
 
-        // Lock process table to search for a runnable process
-        acquire(&ptable.lock);
-
-        // Call FCFS to find the next process to run
-        int process_found = FCFS();
-        if (process_found) {
-            cprintf("Process selected: %d\n", process_found);
-    }
-        release(&ptable.lock);
+    // Lock process table to search for a runnable process
+    acquire(&ptable.lock);
+    Round_Robin();
+    // Call FCFS to find the next process to run
+    // int process_found = FCFS();
+    // if (process_found) {
+    //     cprintf("Process selected: %d\n", process_found);
+    // }
+    release(&ptable.lock);
   }
 }
 

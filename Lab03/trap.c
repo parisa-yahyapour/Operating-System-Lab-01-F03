@@ -107,7 +107,19 @@ void trap(struct trapframe *tf)
   // if (myproc() && myproc()->state == RUNNING &&
   //     tf->trapno == T_IRQ0 + IRQ_TIMER && priority_level == 1)
   //   yield();
+  if (myproc() && myproc()->state == RUNNING &&
+      tf->trapno == T_IRQ0 + IRQ_TIMER && myproc()->priority_level == 1)
+  {
+    myproc()->tick_count++;
 
+    if (myproc()->tick_count == 5)
+    {
+      cprintf("the_time_slice is:%d-pid:%d-cpu %d \n", ticks, myproc()->pid, mycpu());
+
+      myproc()->tick_count = 0;
+      yield();
+    }
+  }
   // Check if the process has been killed since we yielded
   if (myproc() && myproc()->killed && (tf->cs & 3) == DPL_USER)
     exit();

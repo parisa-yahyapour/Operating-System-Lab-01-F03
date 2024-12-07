@@ -51,6 +51,7 @@ struct proc {
   char name[16];               // Process name (debugging)
   uint ticks_queued;           // Time when the process entered ready queue
   int priority_level;
+  int tick_count;
 };
 
 // Process memory is laid out contiguously, low addresses first:
