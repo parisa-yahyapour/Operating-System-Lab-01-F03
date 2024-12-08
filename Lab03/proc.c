@@ -347,6 +347,25 @@ int wait(void)
 //   - swtch to start running that process
 //   - eventually that process transfers control
 //       via swtch back to the scheduler.
+unsigned int seed = 1; // Global seed value, should be initialized
+
+// Function to generate the next pseudo-random number
+int generate_random_number(unsigned int min, unsigned int max) {
+    if (min > max) {
+        return 0; // Error: invalid range
+    }
+
+    // Constants for the LCG (these values are common choices)
+    const unsigned int a = 1103515245;
+    const unsigned int c = 12345;
+    const unsigned int m = 0x7FFFFFFF; // 2^31 - 1
+
+    // Update the seed using the LCG formula
+    seed = (a * seed + c) & m;
+
+    // Scale the result to the desired range
+    return (seed % 100);
+}
 
 struct proc *FCFS(void)
 {
@@ -444,7 +463,8 @@ struct proc *SJF(void)
   if (shortest)
   {
     // cprintf("d\n");
-    int random = 10;
+    int random = generate_random_number(0, 100);
+    // int random = 10;
     if (shortest->confidence > random)
     {
       p = shortest;
@@ -493,13 +513,17 @@ void update_age(void)
         switch (priority)
         {
         case 2:
+        {
           int old_queue = change_queue(p->pid, 1);
           cprintf("Pid: %d, Source: %d, Destination : %d\n", p->pid, old_queue, 1);
-          break;
+        }
+        break;
         case 3:
+        {
           int old_queue_2 = change_queue(p->pid, 2);
           cprintf("Pid: %d, Source: %d, Destination: %d\n", p->pid, old_queue_2, 2);
-          break;
+        }
+        break;
         default:
           break;
         }
