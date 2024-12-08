@@ -361,7 +361,7 @@ struct proc *FCFS(void)
   // Select the process with the smallest ticks_queued
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
-    if (p->state != RUNNABLE)
+    if (p->state != RUNNABLE || mycpu()->ps_priority != 3 || p->priority_level != 3)
       continue;
 
     if (!chosen_proc || p->ticks_queued < chosen_proc->ticks_queued)
@@ -394,7 +394,10 @@ struct proc *Round_Robin(void)
   c->proc = 0;
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
-    if (p->state != RUNNABLE)
+
+    // cprintf("in RR:      %d\n", mycpu()->ps_priority);
+
+    if (p->state != RUNNABLE || p->priority_level != 1 || mycpu()->ps_priority != 1)
       continue;
 
     // Switch to chosen process.  It is the process's job
@@ -423,7 +426,7 @@ struct proc *SJF(void)
   // cprintf("a\n");
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
-    if (p->state != RUNNABLE)
+    if ((p->state != RUNNABLE || mycpu()->ps_priority != 2) || p->priority_level != 2)
       continue;
     // cprintf("shortest %d\n", p->time_burst);
     if ((!shortest || p->time_burst < shortest->time_burst) && p->is_checked == 0 && p->pid != 0)
@@ -483,14 +486,21 @@ void scheduler(void)
     // Lock process table to search for a runnable process
     acquire(&ptable.lock);
     p = Round_Robin();
-    // if (p == 0)
-    // {
-    // p = SJF();
-    // }
-    // if (p == 0)
-    // {
-    // p = FCFS();
-    // }
+    if (p == 0)
+    {
+      mycpu()->ps_priority = 2;
+      
+      p = SJF();
+      //cprintf("ooo\n");
+
+    }
+    if (p == 0)
+    {
+      mycpu()->ps_priority = 3;
+      p = FCFS();
+      //cprintf("pppp\n");
+
+    }
 
     // Call FCFS to find the next process to run
     // struct proc* process_found = FCFS();
@@ -500,7 +510,13 @@ void scheduler(void)
     if (p == 0)
     {
 
+mycpu()->ps_priority=1;
+      mycpu()->fcfs = 100;
+      mycpu()->sjf = 200;
+      mycpu()->rr = 300;
       release(&ptable.lock);
+      //cprintf("rrrr\n");
+
       continue;
     }
 
@@ -552,6 +568,87 @@ void yield(void)
   myproc()->ticks_queued = ticks; // Update when process enters the ready queue
   sched();
   release(&ptable.lock);
+}
+
+void wrr_yeild(void)
+{
+  struct proc *p;
+  int rr_count = 0, fcfs_count = 0, sjf_count = 0;
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->state == RUNNABLE)
+    {
+      switch (p->priority_level)
+      {
+      case 1:
+        rr_count += 1;
+        break;
+      case 2:
+        sjf_count += 1;
+        break;
+      case 3:
+        fcfs_count += 1;
+        break;
+      default:
+        break;
+      }
+    }
+  }
+  int priority = mycpu()->proc->priority_level;
+  // cprintf("%d\n",priority);
+
+  if (priority == 1)
+  {
+    if (mycpu()->rr == 0 || rr_count == 0)
+    {
+      mycpu()->ps_priority = 2;
+      //cprintf("%d\n", mycpu()->ps_priority);
+      //cprintf("uuuuuuu yeild\n");
+
+      yield();
+    }
+    else
+    {
+
+      return;
+    }
+  }
+  else if (priority == 2)
+  {
+    if (mycpu()->sjf == 0 || sjf_count == 0)
+    {
+      mycpu()->ps_priority = 3;
+      //cprintf("uuuuuuu yeild2\n");
+
+      yield();
+
+      // berim saf badi damet
+    }
+    else
+    {
+      return;
+    }
+  }
+  else if (priority == 3)
+  {
+    if (mycpu()->fcfs == 0 || fcfs_count == 0)
+    {
+      mycpu()->ps_priority = 1;
+      mycpu()->fcfs = 100;
+      mycpu()->sjf = 200;
+      mycpu()->rr = 300;
+      //cprintf("uuuuuuu yeild3\n");
+
+      yield();
+
+      // hame chi bargardeh
+      //  berim saf badi
+    }
+    else
+    {
+      return;
+    }
+  }
 }
 
 // A fork child's very first scheduling by scheduler()

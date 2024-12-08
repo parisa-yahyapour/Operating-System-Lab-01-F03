@@ -109,7 +109,7 @@ void trap(struct trapframe *tf)
   //     tf->trapno == T_IRQ0 + IRQ_TIMER && priority_level == 1)
   //   yield();
   if (myproc() && myproc()->state == RUNNING &&
-      tf->trapno == T_IRQ0 + IRQ_TIMER && myproc()->priority_level == 1)
+      tf->trapno == T_IRQ0 + IRQ_TIMER )
   {
     myproc()->tick_count++;
       int priority = mycpu()->proc->priority_level;
@@ -127,11 +127,12 @@ void trap(struct trapframe *tf)
       default:
         break;
       }
-      cprintf("rr: %d //// cpu:%d\n", mycpu()->rr, cpuid());
-
-    if (myproc()->tick_count == 5)
+      //cprintf("rr: %d-cpu:%d\n", mycpu()->rr, cpuid());
+    wrr_yeild();
+    //cprintf("we broke\n");
+    if (myproc()->tick_count == 5&& myproc()->priority_level == 1)
     {
-      cprintf("the_time_slice is:%d-pid:%d-cpu %d \n", ticks, myproc()->pid, cpuid());
+      //cprintf("the_time_slice is:%d-pid:%d-cpu %d \n", ticks, myproc()->pid, cpuid());
       myproc()->tick_count = 0;
       yield();
     }

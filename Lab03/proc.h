@@ -11,6 +11,7 @@ struct cpu {
   int rr;
   int sjf;
   int fcfs;
+  int ps_priority;
 };
 
 extern struct cpu cpus[NCPU];

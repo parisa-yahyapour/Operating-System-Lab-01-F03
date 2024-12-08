@@ -57,6 +57,7 @@ mpmain(void)
   mycpu()->fcfs = 100;
   mycpu()->sjf = 200;
   mycpu()->rr = 300;
+  mycpu()->ps_priority=1; //start with RR
   scheduler();     // start running processes
 }
 
