@@ -91,7 +91,15 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->tick_count = 0;
-  p->priority_level = 1; // i change it
+  if (p->pid == 1 || p->pid == 2 || p->parent->pid == 2)
+  {
+    p->priority_level = 1;
+  }
+  else
+  {
+    p->priority_level = 3;
+  }
+  // p->priority_level = 1; // i change it damet
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -477,11 +485,11 @@ void scheduler(void)
     p = Round_Robin();
     // if (p == 0)
     // {
-      // p = SJF();
+    // p = SJF();
     // }
     // if (p == 0)
     // {
-      // p = FCFS();
+    // p = FCFS();
     // }
 
     // Call FCFS to find the next process to run

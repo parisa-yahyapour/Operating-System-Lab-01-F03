@@ -51,6 +51,7 @@ void trap(struct trapframe *tf)
     {
       acquire(&tickslock);
       ticks++;
+
       wakeup(&ticks);
       release(&tickslock);
     }
@@ -111,11 +112,26 @@ void trap(struct trapframe *tf)
       tf->trapno == T_IRQ0 + IRQ_TIMER && myproc()->priority_level == 1)
   {
     myproc()->tick_count++;
+      int priority = mycpu()->proc->priority_level;
+      switch (priority)
+      {
+      case 1:
+        mycpu()->rr -= 10;
+        break;
+      case 2:
+        mycpu()->sjf -= 10;
+        break;
+      case 3:
+        mycpu()->fcfs -= 10;
+        break;
+      default:
+        break;
+      }
+      cprintf("rr: %d //// cpu:%d\n", mycpu()->rr, cpuid());
 
     if (myproc()->tick_count == 5)
     {
-      cprintf("the_time_slice is:%d-pid:%d-cpu %d \n", ticks, myproc()->pid, mycpu());
-
+      cprintf("the_time_slice is:%d-pid:%d-cpu %d \n", ticks, myproc()->pid, cpuid());
       myproc()->tick_count = 0;
       yield();
     }
