@@ -340,9 +340,8 @@ int wait(void)
 //   - eventually that process transfers control
 //       via swtch back to the scheduler.
 
-int FCFS(void)
+struct proc* FCFS(void)
 {
-  int process_found = 0;
   struct proc *p;
   struct proc *chosen_proc;
   struct cpu *c = mycpu(); // Get the current CPU
@@ -365,7 +364,6 @@ int FCFS(void)
 
   if (chosen_proc)
   {
-    process_found = 1;
     // Switch to the chosen process
     c->proc = chosen_proc;
     switchuvm(c->proc);
@@ -378,7 +376,7 @@ int FCFS(void)
     c->proc = 0;
   }
 
-  return process_found;
+  return chosen_proc;
 }
 
 void Round_Robin(void)
@@ -460,6 +458,7 @@ void SJF(void)
     }
   }
 }
+
 void scheduler(void)
 {
   for (;;)
@@ -472,7 +471,7 @@ void scheduler(void)
     // Round_Robin();
     SJF();
     // Call FCFS to find the next process to run
-    // int process_found = FCFS();
+    // struct proc* process_found = FCFS();
     // if (process_found) {
     //     cprintf("Process selected: %d\n", process_found);
     // }
