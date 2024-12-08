@@ -165,6 +165,7 @@ void            idtinit(void);
 extern uint     ticks;
 void            tvinit(void);
 extern struct spinlock tickslock;
+void            update_age(void);
 
 // uart.c
 void            uartinit(void);

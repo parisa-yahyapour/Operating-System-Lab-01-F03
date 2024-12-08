@@ -59,6 +59,7 @@ struct proc {
   int time_burst;
   int confidence;
   int is_checked;             // 0 is not checked 1 is checked
+  int queue_waiting_time;     // record time we are waiting in a specific queue
 };
 
 // Process memory is laid out contiguously, low addresses first:

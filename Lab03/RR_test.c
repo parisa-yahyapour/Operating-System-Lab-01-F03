@@ -6,7 +6,7 @@
 void test_process(int id) {
     long long count = 0;
     while (count!=10000000000) {
-      printf(1, "");
+      printf(1, "1");
         count++;
     }
        count = 0;

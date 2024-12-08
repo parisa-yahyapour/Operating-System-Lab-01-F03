@@ -376,6 +376,7 @@ struct proc *FCFS(void)
     c->proc = chosen_proc;
     switchuvm(c->proc);
     c->proc->state = RUNNING;
+    c->proc->queue_waiting_time = 0;
 
     swtch(&c->scheduler, c->proc->context); // Context switch
     switchkvm();
@@ -406,6 +407,7 @@ struct proc *Round_Robin(void)
     c->proc = p;
     switchuvm(p);
     p->state = RUNNING;
+    c->proc->queue_waiting_time = 0;
 
     swtch(&(c->scheduler), p->context);
     switchkvm();
@@ -473,6 +475,40 @@ struct proc *SJF(void)
   return 0;
 }
 
+extern int change_queue(int pid, int new_queue);
+
+void update_age(void)
+{
+  struct proc *p;
+  acquire(&ptable.lock);
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->state == RUNNABLE)
+    {
+      p->queue_waiting_time++;
+      if (p->queue_waiting_time == 800)
+      {
+        p->queue_waiting_time = 0;
+        int priority = p->priority_level;
+        switch (priority)
+        {
+        case 2:
+          int old_queue = change_queue(p->pid, 1);
+          cprintf("Pid: %d, Source: %d, Destination : %d\n", p->pid, old_queue, 1);
+          break;
+        case 3:
+          int old_queue_2 = change_queue(p->pid, 2);
+          cprintf("Pid: %d, Source: %d, Destination: %d\n", p->pid, old_queue_2, 2);
+          break;
+        default:
+          break;
+        }
+      }
+    }
+  }
+  release(&ptable.lock);
+}
+
 void scheduler(void)
 {
   struct proc *p;
@@ -489,17 +525,15 @@ void scheduler(void)
     if (p == 0)
     {
       mycpu()->ps_priority = 2;
-      
-      p = SJF();
-      //cprintf("ooo\n");
 
+      p = SJF();
+      // cprintf("ooo\n");
     }
     if (p == 0)
     {
       mycpu()->ps_priority = 3;
       p = FCFS();
-      //cprintf("pppp\n");
-
+      // cprintf("pppp\n");
     }
 
     // Call FCFS to find the next process to run
@@ -510,12 +544,12 @@ void scheduler(void)
     if (p == 0)
     {
 
-mycpu()->ps_priority=1;
+      mycpu()->ps_priority = 1;
       mycpu()->fcfs = 100;
       mycpu()->sjf = 200;
       mycpu()->rr = 300;
       release(&ptable.lock);
-      //cprintf("rrrr\n");
+      // cprintf("rrrr\n");
 
       continue;
     }
@@ -523,6 +557,7 @@ mycpu()->ps_priority=1;
     c->proc = p;
     switchuvm(p);
     p->state = RUNNING;
+    c->proc->queue_waiting_time = 0;
 
     swtch(&(c->scheduler), p->context);
     switchkvm();
@@ -602,8 +637,8 @@ void wrr_yeild(void)
     if (mycpu()->rr == 0 || rr_count == 0)
     {
       mycpu()->ps_priority = 2;
-      //cprintf("%d\n", mycpu()->ps_priority);
-      //cprintf("uuuuuuu yeild\n");
+      // cprintf("%d\n", mycpu()->ps_priority);
+      // cprintf("uuuuuuu yeild\n");
 
       yield();
     }
@@ -618,7 +653,7 @@ void wrr_yeild(void)
     if (mycpu()->sjf == 0 || sjf_count == 0)
     {
       mycpu()->ps_priority = 3;
-      //cprintf("uuuuuuu yeild2\n");
+      // cprintf("uuuuuuu yeild2\n");
 
       yield();
 
@@ -637,7 +672,7 @@ void wrr_yeild(void)
       mycpu()->fcfs = 100;
       mycpu()->sjf = 200;
       mycpu()->rr = 300;
-      //cprintf("uuuuuuu yeild3\n");
+      // cprintf("uuuuuuu yeild3\n");
 
       yield();
 

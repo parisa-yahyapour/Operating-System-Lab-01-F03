@@ -109,30 +109,31 @@ void trap(struct trapframe *tf)
   //     tf->trapno == T_IRQ0 + IRQ_TIMER && priority_level == 1)
   //   yield();
   if (myproc() && myproc()->state == RUNNING &&
-      tf->trapno == T_IRQ0 + IRQ_TIMER )
+      tf->trapno == T_IRQ0 + IRQ_TIMER)
   {
     myproc()->tick_count++;
-      int priority = mycpu()->proc->priority_level;
-      switch (priority)
-      {
-      case 1:
-        mycpu()->rr -= 10;
-        break;
-      case 2:
-        mycpu()->sjf -= 10;
-        break;
-      case 3:
-        mycpu()->fcfs -= 10;
-        break;
-      default:
-        break;
-      }
-      //cprintf("rr: %d-cpu:%d\n", mycpu()->rr, cpuid());
-    wrr_yeild();
-    //cprintf("we broke\n");
-    if (myproc()->tick_count == 5&& myproc()->priority_level == 1)
+    int priority = mycpu()->proc->priority_level;
+    switch (priority)
     {
-      //cprintf("the_time_slice is:%d-pid:%d-cpu %d \n", ticks, myproc()->pid, cpuid());
+    case 1:
+      mycpu()->rr -= 10;
+      break;
+    case 2:
+      mycpu()->sjf -= 10;
+      break;
+    case 3:
+      mycpu()->fcfs -= 10;
+      break;
+    default:
+      break;
+    }
+    // cprintf("rr: %d-cpu:%d\n", mycpu()->rr, cpuid());
+    update_age();
+    wrr_yeild();
+    // cprintf("we broke\n");
+    if (myproc()->tick_count == 5 && myproc()->priority_level == 1)
+    {
+      cprintf("Ticks:%d-pid:%d-cpu:%d\n", ticks, myproc()->pid, cpuid());
       myproc()->tick_count = 0;
       yield();
     }
