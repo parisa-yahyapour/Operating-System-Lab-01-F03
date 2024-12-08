@@ -869,19 +869,6 @@ int change_queue(int pid, int new_queue)
 {
   struct proc *p;
   int old_queue = -1;
-
-  // Check if the new_queue is unset, and assign it based on pid
-  // if (new_queue == UNSET) {
-  //     if (pid == 1)
-  //         new_queue = ROUND_ROBIN;
-  //     else if (pid > 1)
-  //         new_queue = LCFS;
-  //     else
-  //         return -1;
-  // }
-
-  // Acquire lock to modify the process table
-
   acquire(&ptable.lock);
 
   // Find the process with the given pid and change its queue
@@ -915,7 +902,6 @@ void set_process_parameter(int pid, int confidence, int time_burst)
   {
     if (p->pid == pid)
     {
-      cprintf("before: time: %d conf: %d name: %s\n", p->time_burst, p->confidence, p->name);
       break;
     }
   }
@@ -923,7 +909,6 @@ void set_process_parameter(int pid, int confidence, int time_burst)
   {
     p->time_burst = time_burst;
     p->confidence = confidence;
-    cprintf("after: time: %d conf: %d\n", p->time_burst, p->confidence);
   }
 }
 
