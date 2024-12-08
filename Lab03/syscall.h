@@ -22,3 +22,4 @@
 #define SYS_close  21
 #define SYS_set_process_parameter 22
 #define SYS_change_queue 24
+#define SYS_print_process_info 25

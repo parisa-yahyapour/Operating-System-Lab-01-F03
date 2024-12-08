@@ -108,10 +108,12 @@ void trap(struct trapframe *tf)
   // if (myproc() && myproc()->state == RUNNING &&
   //     tf->trapno == T_IRQ0 + IRQ_TIMER && priority_level == 1)
   //   yield();
+  
   if (myproc() && myproc()->state == RUNNING &&
       tf->trapno == T_IRQ0 + IRQ_TIMER)
   {
     myproc()->tick_count++;
+    myproc()->consecutive_run++;
     int priority = mycpu()->proc->priority_level;
     switch (priority)
     {

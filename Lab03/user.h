@@ -41,3 +41,4 @@ int change_queue(int pid, int new_queue);
 
 
 void set_process_parameter(int pid, int confidence, int time_burst);
+void print_process_info(void);

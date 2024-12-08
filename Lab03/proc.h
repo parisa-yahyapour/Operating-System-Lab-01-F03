@@ -60,6 +60,8 @@ struct proc {
   int confidence;
   int is_checked;             // 0 is not checked 1 is checked
   int queue_waiting_time;     // record time we are waiting in a specific queue
+  int consecutive_run;        // record number of ticks our process has runned consequtively
+  int arrival_time;           // record time our process has entered 
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -70,3 +72,4 @@ struct proc {
 
 
 void set_process_parameter(int pid, int confidence, int time_burst);
+void print_process_info(void);

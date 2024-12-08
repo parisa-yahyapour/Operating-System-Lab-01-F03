@@ -186,6 +186,7 @@ UPROGS=\
 	_sjf_test\
 	_changeQueue\
 	_test_parameter\
+	_sys_test\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

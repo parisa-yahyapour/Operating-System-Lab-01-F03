@@ -91,12 +91,16 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->tick_count = 0;
-  if (p->pid == 1 || p->pid == 2 || p->parent->pid == 2)
+  p->consecutive_run = 0;
+
+  if (p->pid == 1 || p->pid == 2) // || p->parent->pid == 2
   {
+    p->arrival_time = ticks;
     p->priority_level = 1;
   }
   else
   {
+    p->arrival_time = ticks;
     p->priority_level = 3;
   }
   // p->priority_level = 1; // i change it damet
@@ -350,21 +354,23 @@ int wait(void)
 unsigned int seed = 1; // Global seed value, should be initialized
 
 // Function to generate the next pseudo-random number
-int generate_random_number(unsigned int min, unsigned int max) {
-    if (min > max) {
-        return 0; // Error: invalid range
-    }
+int generate_random_number(unsigned int min, unsigned int max)
+{
+  if (min > max)
+  {
+    return 0; // Error: invalid range
+  }
 
-    // Constants for the LCG (these values are common choices)
-    const unsigned int a = 1103515245;
-    const unsigned int c = 12345;
-    const unsigned int m = 0x7FFFFFFF; // 2^31 - 1
+  // Constants for the LCG (these values are common choices)
+  const unsigned int a = 1103515245;
+  const unsigned int c = 12345;
+  const unsigned int m = 0x7FFFFFFF; // 2^31 - 1
 
-    // Update the seed using the LCG formula
-    seed = (a * seed + c) & m;
+  // Update the seed using the LCG formula
+  seed = (a * seed + c) & m;
 
-    // Scale the result to the desired range
-    return (seed % 100);
+  // Scale the result to the desired range
+  return (seed % 100);
 }
 
 struct proc *FCFS(void)
@@ -887,6 +893,7 @@ int change_queue(int pid, int new_queue)
 
       old_queue = p->priority_level;
       p->priority_level = new_queue;
+      p->arrival_time = ticks;
       // cprintf("post: %d",p->priority_level);
 
       // p->sched_info.arrival_queue_time = ticks; // Update the arrival time for the new queue
@@ -917,5 +924,86 @@ void set_process_parameter(int pid, int confidence, int time_burst)
     p->time_burst = time_burst;
     p->confidence = confidence;
     cprintf("after: time: %d conf: %d\n", p->time_burst, p->confidence);
+  }
+}
+
+int count_digits(int number) {
+    if (number == 0)
+        return 1;  // Special case: 0 has 1 digit
+
+    int count = 0;
+    if (number < 0) {
+        count++;       // Count the negative sign
+        number = -number; // Work with the absolute value
+    }
+
+    while (number > 0) {
+        count++;
+        number /= 10; // Remove the last digit
+    }
+    return count;
+}
+
+void printspaces(int count) {
+    for (int i = 0; i < count; i++) {
+        cprintf(" ");
+    }
+}
+
+void print_process_info(void)
+{
+  static char *states[] = {
+      [UNUSED] "unused",
+      [EMBRYO] "embryo",
+      [SLEEPING] "sleeping",
+      [RUNNABLE] "runnable",
+      [RUNNING] "running",
+      [ZOMBIE] "zombie"};
+
+ 
+  static int columns[] = {16, 6, 14, 9, 12, 13, 15, 16, 16};
+  cprintf("name           pid     state      queue   wait_time   confidence   burst_time   consecutive_run   arrival\n");
+  cprintf("--------------------------------------------------------------------------------------------------------------\n");
+
+  struct proc *p;
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->state == UNUSED)
+      continue;
+
+    const char *state;
+    if (p->state >= 0 && p->state < NELEM(states) && states[p->state])
+      state = states[p->state];
+    else
+      state = "???";
+
+    cprintf("%s", p->name);
+    printspaces(columns[0] - strlen(p->name));
+
+    cprintf("%d", p->pid);
+    printspaces(columns[1] - count_digits(p->pid));
+
+    cprintf("%s", state);
+    printspaces(columns[2] - strlen(state));
+
+    cprintf("%d", p->priority_level);
+    printspaces(columns[3] - count_digits(p->priority_level));
+
+    cprintf("%d", p->queue_waiting_time);
+    printspaces(columns[4] - count_digits(p->queue_waiting_time));
+
+    cprintf("%d", p->confidence);
+    printspaces(columns[5] - count_digits(p->confidence));
+
+    cprintf("%d", p->time_burst);
+    printspaces(columns[6] - count_digits(p->time_burst));
+
+    cprintf("%d", p->consecutive_run);
+    printspaces(columns[7] - count_digits(p->consecutive_run));
+
+    cprintf("%d", p->arrival_time);
+    printspaces(columns[8] - count_digits(p->arrival_time));
+
+    cprintf("\n");
   }
 }

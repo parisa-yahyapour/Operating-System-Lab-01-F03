@@ -115,3 +115,11 @@ int sys_set_process_parameter(void)
   //cprintf("hi\n");
   return 0;
 }
+
+extern void print_process_info(void);
+
+int sys_print_process_info(void)
+{
+  print_process_info();
+  return 0;
+}
