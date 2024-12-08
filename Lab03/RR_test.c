@@ -5,27 +5,27 @@
 
 void test_process(int id) {
     long long count = 0;
-    while (count!=1000000000000000000) {
+    while (count!=10000000000) {
       printf(1, "");
         count++;
     }
        count = 0;
-    while (count!=1000000000000000000) {
-      printf(1, "");
-        count++;
-    }    count = 0;
-    while (count!=1000000000000000000) {
-      printf(1, "");
-        count++;
-    }    count = 0;
-    while (count!=1000000000000000000) {
-      printf(1, "");
-        count++;
-    }   count = 0;
-    while (count!=1000000000000000000) {
-      printf(1, "");
-        count++;
-    }
+    // while (count!=1000000000000000000) {
+    //   printf(1, "");
+    //     count++;
+    // }    count = 0;
+    // while (count!=1000000000000000000) {
+    //   printf(1, "");
+    //     count++;
+    // }    count = 0;
+    // while (count!=1000000000000000000) {
+    //   printf(1, "");
+    //     count++;
+    // }   count = 0;
+    // while (count!=1000000000000000000) {
+    //   printf(1, "");
+    //     count++;
+    // }
 }
 
 int main(void) {

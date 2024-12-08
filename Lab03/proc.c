@@ -91,7 +91,7 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->tick_count = 0;
-  p->priority_level = 2; // i change it
+  p->priority_level = 1; // i change it
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -376,10 +376,10 @@ struct proc *FCFS(void)
     c->proc = 0;
   }
 
-  return chosen_proc;
+  return 0;
 }
 
-void Round_Robin(void)
+struct proc *Round_Robin(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
@@ -403,6 +403,7 @@ void Round_Robin(void)
     // It should have changed its p->state before coming back.
     c->proc = 0;
   }
+  return 0;
 }
 
 struct proc *SJF(void)
@@ -473,8 +474,16 @@ void scheduler(void)
 
     // Lock process table to search for a runnable process
     acquire(&ptable.lock);
-    // Round_Robin();
-    p = SJF();
+    p = Round_Robin();
+    // if (p == 0)
+    // {
+      // p = SJF();
+    // }
+    // if (p == 0)
+    // {
+      // p = FCFS();
+    // }
+
     // Call FCFS to find the next process to run
     // struct proc* process_found = FCFS();
     // if (process_found) {
@@ -482,6 +491,7 @@ void scheduler(void)
     // }
     if (p == 0)
     {
+
       release(&ptable.lock);
       continue;
     }
@@ -493,8 +503,8 @@ void scheduler(void)
     swtch(&(c->scheduler), p->context);
     switchkvm();
 
-    // Process is done running for now.
-    // It should have changed its p->state before coming back.
+    // // Process is done running for now.
+    // // It should have changed its p->state before coming back.
     c->proc = 0;
 
     release(&ptable.lock);
