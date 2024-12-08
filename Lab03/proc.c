@@ -340,13 +340,13 @@ int wait(void)
 //   - eventually that process transfers control
 //       via swtch back to the scheduler.
 
-struct proc* FCFS(void)
+struct proc *FCFS(void)
 {
   struct proc *p;
   struct proc *chosen_proc;
   struct cpu *c = mycpu(); // Get the current CPU
 
-  c->proc = 0; // No process is running initially
+  // c->proc = 0; // No process is running initially
 
   chosen_proc = 0;
 
@@ -405,11 +405,11 @@ void Round_Robin(void)
   }
 }
 
-void SJF(void)
+struct proc *SJF(void)
 {
   struct proc *p, *shortest = 0;
-  struct cpu *c = mycpu();
-  c->proc = 0;
+  // struct cpu *c = mycpu();
+  // c->proc = 0;
   shortest = 0;
   // cprintf("a\n");
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -434,33 +434,38 @@ void SJF(void)
     if (shortest->confidence > random)
     {
       p = shortest;
-      c->proc = p;
+      // c->proc = p;
       struct proc *temp;
       for (temp = ptable.proc; temp < &ptable.proc[NPROC]; temp++)
       {
         temp->is_checked = 0;
       }
-      switchuvm(p);
-      p->state = RUNNING;
+      return p;
+      // switchuvm(p);
+      // p->state = RUNNING;
 
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
+      // swtch(&(c->scheduler), p->context);
+      // switchkvm();
 
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
-      // cprintf("e\n");
+      // // Process is done running for now.
+      // // It should have changed its p->state before coming back.
+      // c->proc = 0;
+      // // cprintf("e\n");
     }
     else
     {
-      cprintf("f\n");
+      // cprintf("f\n");
       shortest->is_checked = 1;
     }
   }
+  return 0;
 }
 
 void scheduler(void)
 {
+  struct proc *p;
+  struct cpu *c = mycpu();
+  c->proc = 0;
   for (;;)
   {
     // Enable interrupts on this CPU
@@ -469,12 +474,29 @@ void scheduler(void)
     // Lock process table to search for a runnable process
     acquire(&ptable.lock);
     // Round_Robin();
-    SJF();
+    p = SJF();
     // Call FCFS to find the next process to run
     // struct proc* process_found = FCFS();
     // if (process_found) {
     //     cprintf("Process selected: %d\n", process_found);
     // }
+    if (p == 0)
+    {
+      release(&ptable.lock);
+      continue;
+    }
+
+    c->proc = p;
+    switchuvm(p);
+    p->state = RUNNING;
+
+    swtch(&(c->scheduler), p->context);
+    switchkvm();
+
+    // Process is done running for now.
+    // It should have changed its p->state before coming back.
+    c->proc = 0;
+
     release(&ptable.lock);
   }
 }
@@ -663,48 +685,51 @@ void procdump(void)
   }
 }
 
-int change_queue(int pid, int new_queue) {
-    struct proc *p;
-    int old_queue = -1;
+int change_queue(int pid, int new_queue)
+{
+  struct proc *p;
+  int old_queue = -1;
 
-    // Check if the new_queue is unset, and assign it based on pid
-    // if (new_queue == UNSET) {
-    //     if (pid == 1)
-    //         new_queue = ROUND_ROBIN;
-    //     else if (pid > 1)
-    //         new_queue = LCFS;
-    //     else
-    //         return -1;
-    // }
+  // Check if the new_queue is unset, and assign it based on pid
+  // if (new_queue == UNSET) {
+  //     if (pid == 1)
+  //         new_queue = ROUND_ROBIN;
+  //     else if (pid > 1)
+  //         new_queue = LCFS;
+  //     else
+  //         return -1;
+  // }
 
-    // Acquire lock to modify the process table
+  // Acquire lock to modify the process table
 
-    acquire(&ptable.lock);
+  acquire(&ptable.lock);
 
-    // Find the process with the given pid and change its queue
-    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-        if (p->pid == pid) {
-            // cprintf("pre: %d",p->priority_level);
+  // Find the process with the given pid and change its queue
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->pid == pid)
+    {
+      // cprintf("pre: %d",p->priority_level);
 
-            old_queue = p->priority_level;
-            p->priority_level= new_queue;
-            // cprintf("post: %d",p->priority_level);
+      old_queue = p->priority_level;
+      p->priority_level = new_queue;
+      // cprintf("post: %d",p->priority_level);
 
-            //p->sched_info.arrival_queue_time = ticks; // Update the arrival time for the new queue
-            break;
-        }
+      // p->sched_info.arrival_queue_time = ticks; // Update the arrival time for the new queue
+      break;
     }
+  }
 
-    // Release the process table lock
-    release(&ptable.lock);
+  // Release the process table lock
+  release(&ptable.lock);
 
-    return old_queue;
+  return old_queue;
 }
 
 void set_process_parameter(int pid, int confidence, int time_burst)
 {
   struct proc *p = 0;
-  //cprintf("%d %d %d\n", time_burst, confidence, pid);
+  // cprintf("%d %d %d\n", time_burst, confidence, pid);
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
     if (p->pid == pid)
