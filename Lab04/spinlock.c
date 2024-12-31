@@ -9,8 +9,7 @@
 #include "proc.h"
 #include "spinlock.h"
 
-void
-initlock(struct spinlock *lk, char *name)
+void initlock(struct spinlock *lk, char *name)
 {
   lk->name = name;
   lk->locked = 0;
@@ -21,15 +20,14 @@ initlock(struct spinlock *lk, char *name)
 // Loops (spins) until the lock is acquired.
 // Holding a lock for a long time may cause
 // other CPUs to waste time spinning to acquire it.
-void
-acquire(struct spinlock *lk)
+void acquire(struct spinlock *lk)
 {
   pushcli(); // disable interrupts to avoid deadlock.
-  if(holding(lk))
+  if (holding(lk))
     panic("acquire");
 
   // The xchg is atomic.
-  while(xchg(&lk->locked, 1) != 0)
+  while (xchg(&lk->locked, 1) != 0)
     ;
 
   // Tell the C compiler and the processor to not move loads or stores
@@ -43,10 +41,9 @@ acquire(struct spinlock *lk)
 }
 
 // Release the lock.
-void
-release(struct spinlock *lk)
+void release(struct spinlock *lk)
 {
-  if(!holding(lk))
+  if (!holding(lk))
     panic("release");
 
   lk->pcs[0] = 0;
@@ -62,32 +59,31 @@ release(struct spinlock *lk)
   // Release the lock, equivalent to lk->locked = 0.
   // This code can't use a C assignment, since it might
   // not be atomic. A real OS would use C atomics here.
-  asm volatile("movl $0, %0" : "+m" (lk->locked) : );
+  asm volatile("movl $0, %0" : "+m"(lk->locked) :);
 
   popcli();
 }
 
 // Record the current call stack in pcs[] by following the %ebp chain.
-void
-getcallerpcs(void *v, uint pcs[])
+void getcallerpcs(void *v, uint pcs[])
 {
   uint *ebp;
   int i;
 
-  ebp = (uint*)v - 2;
-  for(i = 0; i < 10; i++){
-    if(ebp == 0 || ebp < (uint*)KERNBASE || ebp == (uint*)0xffffffff)
+  ebp = (uint *)v - 2;
+  for (i = 0; i < 10; i++)
+  {
+    if (ebp == 0 || ebp < (uint *)KERNBASE || ebp == (uint *)0xffffffff)
       break;
-    pcs[i] = ebp[1];     // saved %eip
-    ebp = (uint*)ebp[0]; // saved %ebp
+    pcs[i] = ebp[1];      // saved %eip
+    ebp = (uint *)ebp[0]; // saved %ebp
   }
-  for(; i < 10; i++)
+  for (; i < 10; i++)
     pcs[i] = 0;
 }
 
 // Check whether this cpu is holding the lock.
-int
-holding(struct spinlock *lock)
+int holding(struct spinlock *lock)
 {
   int r;
   pushcli();
@@ -96,31 +92,80 @@ holding(struct spinlock *lock)
   return r;
 }
 
-
 // Pushcli/popcli are like cli/sti except that they are matched:
 // it takes two popcli to undo two pushcli.  Also, if interrupts
 // are off, then pushcli, popcli leaves them off.
 
-void
-pushcli(void)
+void pushcli(void)
 {
   int eflags;
 
   eflags = readeflags();
   cli();
-  if(mycpu()->ncli == 0)
+  if (mycpu()->ncli == 0)
     mycpu()->intena = eflags & FL_IF;
   mycpu()->ncli += 1;
 }
 
-void
-popcli(void)
+void popcli(void)
 {
-  if(readeflags()&FL_IF)
+  if (readeflags() & FL_IF)
     panic("popcli - interruptible");
-  if(--mycpu()->ncli < 0)
+  if (--mycpu()->ncli < 0)
     panic("popcli");
-  if(mycpu()->ncli == 0 && mycpu()->intena)
+  if (mycpu()->ncli == 0 && mycpu()->intena)
     sti();
 }
 
+void Initreentrantlock(struct reentrantlock *rlock, char *name)
+{
+  initlock(&rlock->lock, name);
+  rlock->owner = 0;     // No owner initially
+  rlock->recursion = 0; // Recursion depth is zero
+}
+
+void acquirereentrantlock(struct reentrantlock *rlock)
+{
+  acquire(&rlock->lock); // Acquire the spinlock for atomicity
+
+  if (rlock->owner == myproc())
+  {
+    // If the current process/thread already owns the lock
+    rlock->recursion++;
+  }
+  else
+  {
+    // Wait until the lock is available
+    while (rlock->owner != 0)
+    {
+      sleep(rlock, &rlock->lock); // Sleep until it's released
+    }
+
+    // Take ownership of the lock
+    rlock->owner = myproc();
+    rlock->recursion = 1;
+  }
+
+  release(&rlock->lock); // Release the spinlock
+}
+
+void releasereentrantlock(struct reentrantlock *rlock)
+{
+  acquire(&rlock->lock); // Acquire the spinlock for atomicity
+
+  if (rlock->owner != myproc())
+  {
+    panic("reentrantlock_release: not the owner");
+  }
+
+  rlock->recursion--; // Decrease the recursion depth
+
+  if (rlock->recursion == 0)
+  {
+    // Fully release the lock
+    rlock->owner = 0;
+    wakeup(rlock); // Wake up other waiting processes/threads
+  }
+
+  release(&rlock->lock); // Release the spinlock
+}
