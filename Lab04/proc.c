@@ -548,6 +548,7 @@ int count_syscalls(void)
   int total_syscall_counts=0;
   for (int i = 0; i < ncpu; i++)
   {
+    cprintf("cpu%d num %d\n", i, cpus[i].SysCallCounter);
     total_syscall_counts+=cpus[i].SysCallCounter;
   }
   cprintf("t: %d\n",total_syscall_counts);
