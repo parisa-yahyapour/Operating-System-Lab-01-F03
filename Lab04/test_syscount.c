@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
             {
                 temp++; // Incrementing 'temp' for activity during busy-waiting
             }
-
+  
             // Critical section: writing to file.txt
             write(fd, write_data, strlen(write_data)); // Write to the file.
 

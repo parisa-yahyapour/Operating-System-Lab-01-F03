@@ -91,3 +91,33 @@ int sys_count_syscalls(void)
   count_syscalls();
   return 0;
 }
+
+ int sys_init_reentrant_lock(void)
+ {
+  struct reentrantlock *lock;
+    char *name;
+    // Retrieve arguments from the system call
+    // if (argstr(1, &name) < 0)
+
+    if (argptr(0, (void *)&lock, sizeof(&lock)) < 0 || argstr(1, &name) < 0)
+        return -1;
+
+    Initreentrantlock(lock, name);
+    return 0;
+ }
+ int sys_acquire_reentrant_lock(void)
+ {
+  struct reentrantlock *lock;
+    if (argptr(0, (void *)&lock, sizeof(&lock)) < 0)
+        return -1;
+    acquirereentrantlock(lock);
+    return 0;
+ }
+ int sys_release_reentrant_lock (void)
+ {
+  struct reentrantlock *lock;
+    if (argptr(0, (void *)&lock, sizeof(&lock)) < 0)
+        return -1;
+    releasereentrantlock(lock);
+    return 0;
+ }

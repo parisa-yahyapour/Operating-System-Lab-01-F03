@@ -21,3 +21,6 @@
 #define SYS_mkdir 20
 #define SYS_close 21
 #define SYS_count_syscalls 22
+#define SYS_init_reentrant_lock 23
+#define SYS_acquire_reentrant_lock 24
+#define SYS_release_reentrant_lock 25
