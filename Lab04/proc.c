@@ -542,3 +542,15 @@ void procdump(void)
     cprintf("\n");
   }
 }
+extern int globalSysCallCounter;
+int count_syscalls(void)
+{
+  int total_syscall_counts=0;
+  for (int i = 0; i < ncpu; i++)
+  {
+    total_syscall_counts+=cpus[i].SysCallCounter;
+  }
+  cprintf("t: %d\n",total_syscall_counts);
+  cprintf("g: %d\n",globalSysCallCounter);
+  return 0;
+}
