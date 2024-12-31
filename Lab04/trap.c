@@ -8,6 +8,8 @@
 #include "traps.h"
 #include "spinlock.h"
 
+int globalSysCallCounter = 0;
+
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
 extern uint vectors[]; // in vectors.S: array of 256 entry pointers
@@ -39,6 +41,28 @@ void trap(struct trapframe *tf)
       exit();
     myproc()->tf = tf;
     syscall();
+
+    uint current_pid = tf->eax;
+    int new_sys_call_count;
+    switch(current_pid)
+    {
+      case 15: 
+      new_sys_call_count = 3;
+      break;
+
+      case 16:
+      new_sys_call_count = 2;
+      break;
+
+      default:
+      new_sys_call_count = 1;
+      break;
+    }
+    pushcli();
+    struct cpu* current_cpu = mycpu();
+    current_cpu->SysCallCounter += new_sys_call_count;
+    popcli();
+    globalSysCallCounter += new_sys_call_count;
     if (myproc()->killed)
       exit();
     return;
