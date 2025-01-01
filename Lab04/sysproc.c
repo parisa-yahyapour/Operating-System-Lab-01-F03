@@ -96,9 +96,6 @@ int sys_count_syscalls(void)
  {
   struct reentrantlock *lock;
     char *name;
-    // Retrieve arguments from the system call
-    // if (argstr(1, &name) < 0)
-
     if (argptr(0, (void *)&lock, sizeof(&lock)) < 0 || argstr(1, &name) < 0)
         return -1;
 

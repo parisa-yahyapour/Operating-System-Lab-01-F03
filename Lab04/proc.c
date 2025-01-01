@@ -551,7 +551,7 @@ int count_syscalls(void)
     cprintf("cpu%d num %d\n", i, cpus[i].SysCallCounter);
     total_syscall_counts+=cpus[i].SysCallCounter;
   }
-  cprintf("t: %d\n",total_syscall_counts);
-  cprintf("g: %d\n",globalSysCallCounter);
+  cprintf("Sum: %d\n",total_syscall_counts);
+  cprintf("Global: %d\n",globalSysCallCounter);
   return 0;
 }

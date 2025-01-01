@@ -12,9 +12,9 @@ struct spinlock
 
 struct reentrantlock
 {
-  struct spinlock lock; // Underlying spinlock for atomicity
-  struct proc *owner;   // Current owner of the lock
-  int recursion;        // Recursion depth for reentrancy
+  struct spinlock lock; 
+  struct proc *owner;  
+  int recursion;        
 };
 
 void Initreentrantlock(struct reentrantlock *rlock, char *name);

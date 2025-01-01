@@ -120,52 +120,48 @@ void popcli(void)
 void Initreentrantlock(struct reentrantlock *rlock, char *name)
 {
   initlock(&rlock->lock, name);
-  rlock->owner = 0;     // No owner initially
-  rlock->recursion = 0; // Recursion depth is zero
+  rlock->owner = 0;
+  rlock->recursion = 0;
 }
 
 void acquirereentrantlock(struct reentrantlock *rlock)
 {
-  acquire(&rlock->lock); // Acquire the spinlock for atomicity
+  acquire(&rlock->lock);
 
   if (rlock->owner == myproc())
   {
-    // If the current process/thread already owns the lock
     rlock->recursion++;
   }
   else
   {
-    // Wait until the lock is available
     while (rlock->owner != 0)
     {
-      sleep(rlock, &rlock->lock); // Sleep until it's released
+      sleep(rlock, &rlock->lock);
     }
-
-    // Take ownership of the lock
     rlock->owner = myproc();
     rlock->recursion = 1;
   }
 
-  release(&rlock->lock); // Release the spinlock
+  release(&rlock->lock); 
 }
 
 void releasereentrantlock(struct reentrantlock *rlock)
 {
-  acquire(&rlock->lock); // Acquire the spinlock for atomicity
+  acquire(&rlock->lock); 
 
   if (rlock->owner != myproc())
   {
     panic("reentrantlock_release: not the owner");
   }
 
-  rlock->recursion--; // Decrease the recursion depth
+  rlock->recursion--;
 
   if (rlock->recursion == 0)
   {
-    // Fully release the lock
+   
     rlock->owner = 0;
-    wakeup(rlock); // Wake up other waiting processes/threads
+    wakeup(rlock);
   }
 
-  release(&rlock->lock); // Release the spinlock
+  release(&rlock->lock); 
 }
