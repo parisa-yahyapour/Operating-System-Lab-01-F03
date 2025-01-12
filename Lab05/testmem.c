@@ -7,15 +7,15 @@ void calculate_factorial(int index, int num)
 {
     char *val = 0;
 
-    open_sharedmem(MEM_ID, &val);   // Open shared memory
-    acquire_sharedmem_lock(MEM_ID); // Lock shared memory
+    open_sharedmem(MEM_ID, &val);   
+    acquire_sharedmem_lock(MEM_ID); 
 
-    int *shared_val = (int *)val; // Interpret the shared memory as an integer pointer
-    *shared_val *= num;           // Multiply the current value in shared memory by `num`
+    int *shared_val = (int *)val; 
+    *shared_val *= num;           
     printf(1, "Process %d updated factorial to: %d\n", index, *shared_val);
 
-    release_sharedmem_lock(MEM_ID); // Release the lock
-    close_sharedmem(MEM_ID);        // Close shared memory
+    release_sharedmem_lock(MEM_ID); 
+    close_sharedmem(MEM_ID);        
 }
 
 int main(int argc, char *argv[])
@@ -37,37 +37,26 @@ int main(int argc, char *argv[])
 
     char *val = 0;
 
-    open_sharedmem(MEM_ID, &val);   // Open shared memory
-    acquire_sharedmem_lock(MEM_ID); // Lock shared memory
+    open_sharedmem(MEM_ID, &val);   
+    acquire_sharedmem_lock(MEM_ID); 
 
-    int *shared_val = (int *)val;   // Interpret the shared memory as an integer pointer
-    *shared_val = 1;                // Initialize shared memory with 1 (factorial base case)
+    int *shared_val = (int *)val;   
+    *shared_val = 1;                
 
-    printf(1, "ghaa\n");
-    release_sharedmem_lock(MEM_ID); // Release the lock
-    printf(1, "sss\n");
+    release_sharedmem_lock(MEM_ID); 
     for (int i = 1; i <= number; i++)
     {
         int pid = fork();
         if (pid == 0)
         {
-            // Child process performs its part of the factorial computation
             calculate_factorial(i, i);
-            sleep(5);
+            sleep(10);
             exit();
         }
     }
-
     for (int i = 1; i <= number; i++)
     {
-        wait(); // Wait for all child processes to complete
+        wait(); 
     }
-    // sleep(5);
-    // acquire_sharedmem_lock(MEM_ID); // Lock shared memory
-    // printf(1, "Final factorial result for %d is: %d\n", number, *shared_val);
-
-    // release_sharedmem_lock(MEM_ID); // Release the lock
-    // close_sharedmem(MEM_ID); // Close shared memory
-
     exit();
 }
