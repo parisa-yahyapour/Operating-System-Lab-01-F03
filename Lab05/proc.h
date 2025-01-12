@@ -1,5 +1,3 @@
-#define SHAREDREGIONS 64
-
 // Per-CPU state
 struct cpu
 {
@@ -62,6 +60,9 @@ struct proc
   struct file *ofile[NOFILE]; // Open files
   struct inode *cwd;          // Current directory
   char name[16];              // Process name (debugging)
+  // lab 5
+  //  char *shared_memory;
+  int top; // top of user space, we had to add this to each proc, because it's virtual (unique for each proc)
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -69,12 +70,3 @@ struct proc
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
-
-typedef struct sharedPages
-{
-  uint key, size;
-  int shmid;
-  void *virtualAddr;
-} sharedPages;
-
-sharedPages pages[SHAREDREGIONS];
